@@ -84,7 +84,30 @@ a { color: var(--purple); }
   padding: 6px 14px; border-radius: 999px;
 }
 .main-nav a:hover { background: var(--mist); color: var(--purple); }
-@media (max-width: 720px) { .main-nav { display: none; } .avatar { margin-left: auto; } .avatar-label { display: none; } }
+.menu-btn, .nav-contact { display: none; }
+@media (max-width: 720px) {
+  .avatar { display: none; }
+  .menu-btn { display: grid; place-items: center; margin-left: auto; width: 44px; height: 44px; border: 0; border-radius: 12px; background: var(--mist); color: var(--purple); cursor: pointer; }
+  .menu-btn svg { width: 24px; height: 24px; }
+  .menu-btn .i-close, .site-header.open .menu-btn .i-open { display: none; }
+  .site-header.open .menu-btn .i-close { display: block; }
+  .main-nav {
+    display: none; position: absolute; top: 100%; left: 0; right: 0; margin: 0;
+    flex-direction: column; flex-wrap: nowrap; gap: 2px; background: var(--white);
+    padding: 8px var(--gutter-r) 18px var(--gutter-l); border-bottom: 1px solid var(--line);
+    box-shadow: 0 18px 30px -20px rgba(46, 38, 64, .45); max-height: calc(100vh - 80px); overflow-y: auto;
+  }
+  .site-header.open .main-nav { display: flex; }
+  .main-nav a { font-size: 17px; padding: 12px 12px; border-radius: 10px; }
+  .main-nav a.nav-contact {
+    display: flex; align-items: center; gap: 14px; margin-top: 10px; padding: 14px;
+    background: var(--mist); border-radius: var(--radius);
+  }
+  .nav-contact .nc-img { position: relative; width: 56px; height: 56px; border-radius: 50%; overflow: hidden; flex-shrink: 0; background: var(--white); box-shadow: 0 0 0 2px var(--white), 0 0 0 3.2px var(--purple-80); }
+  .nav-contact .nc-img img { width: 100%; height: 100%; object-fit: cover; object-position: center top; display: block; }
+  .nav-contact b { display: block; color: var(--purple); font-size: 17px; }
+  .nav-contact small { display: block; color: var(--muted); font-size: 13px; font-weight: 400; line-height: 1.5; }
+}
 
 /* ---------- hero ---------- */
 .hero { background: var(--mist); position: relative; overflow: hidden; }
@@ -340,12 +363,20 @@ a { color: var(--purple); }
       <svg aria-hidden="true"><use href="#logo"/></svg>
       <span class="brand-text"><b>秉軒老師的 PDF 工具箱</b><small>AI效能實驗室</small></span>
     </a>
-    <nav class="main-nav" aria-label="常用工具">
+    <button class="menu-btn" id="menuBtn" type="button" aria-expanded="false" aria-controls="mainNav" aria-label="開啟選單">
+      <svg class="i-open" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"/></svg>
+      <svg class="i-close" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg>
+    </button>
+    <nav class="main-nav" id="mainNav" aria-label="常用工具">
       <a href="#merge">合併</a>
       <a href="#split">分割</a>
       <a href="#compress">壓縮</a>
       <a href="#img2pdf">圖片轉 PDF</a>
       <a href="#" data-home="1">全部工具</a>
+      <a class="nav-contact" href="https://ai-efficiency-lab-site.vercel.app/#about" target="_blank" rel="noopener">
+        <span class="nc-img" id="ncImg"></span>
+        <span><b>聯繫作者</b><small>認識秉軒老師與企業 AI 培訓 →</small></span>
+      </a>
     </nav>
     <a class="avatar" href="https://ai-efficiency-lab-site.vercel.app/#about" target="_blank" rel="noopener" aria-label="聯繫作者（另開新頁）">
       <span class="avatar-label">聯繫作者</span>
@@ -474,7 +505,7 @@ const esc = s => String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;'
 const fmtSize = b => b < 1024 ? b + ' B' : b < 1048576 ? (b / 1024).toFixed(1) + ' KB' : (b / 1048576).toFixed(2) + ' MB';
 const baseName = n => n.replace(/\.[^.]+$/, '');
 const tick = () => new Promise(r => setTimeout(r, 0));
-const { PDFDocument, degrees } = PDFLib;
+const { PDFDocument, degrees } = window.PDFLib || {};
 
 if (window.pdfjsLib) pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
 
@@ -1346,6 +1377,19 @@ function renderResult(r) {
     navigator.clipboard.writeText(r.text).then(() => toast('已複製'), () => { ta.focus(); ta.select(); toast('請按 Ctrl+C（或 ⌘C）複製選取的文字'); });
   });
 }
+
+/* ================= mobile menu ================= */
+(() => {
+  const header = $('.site-header'), btn = $('#menuBtn');
+  const src = $('.avatar-frame img');
+  if (src) { const im = new Image(); im.src = src.src; im.alt = ''; $('#ncImg').appendChild(im); }
+  const set = open => { header.classList.toggle('open', open); btn.setAttribute('aria-expanded', String(open)); btn.setAttribute('aria-label', open ? '關閉選單' : '開啟選單'); };
+  btn.addEventListener('click', () => set(!header.classList.contains('open')));
+  $('#mainNav').addEventListener('click', e => { if (e.target.closest('a')) set(false); });
+  document.addEventListener('keydown', e => { if (e.key === 'Escape') set(false); });
+  document.addEventListener('click', e => { if (!header.contains(e.target)) set(false); });
+  window.addEventListener('hashchange', () => set(false));
+})();
 
 /* ================= boot ================= */
 if (!window.PDFLib || !window.pdfjsLib || !window.JSZip) {
