@@ -1,0 +1,1361 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="description" content="秉軒老師的 PDF 工具箱：合併、分割、壓縮、旋轉、轉檔、浮水印與頁碼，檔案只在你的瀏覽器裡處理。">
+<link rel="icon" href="favicon.svg" type="image/svg+xml">
+</head>
+<body>
+<title>秉軒老師的 PDF 工具箱</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&family=Nunito:wght@400;600;800&display=swap">
+<style>
+/* Layout: light, airy brand world (CIS 60/30/10). Mist-violet hero band with 37° rhythm lines,
+   a tool grid of rounded single-line icons, and a two-column workspace (canvas + options) per tool.
+   Single light theme on purpose: the brand book asks for bright, light pages and rules out dark tech looks. */
+:root {
+  --purple: #603E8D;      /* 效能紫：主色、標題、線條 */
+  --purple-80: #806599;
+  --purple-20: #DFD8E8;
+  --yellow: #FFC94A;      /* 火花黃：唯一的行動按鈕 */
+  --teal: #36C2B4;        /* 清新青：上升勾、完成狀態 */
+  --mist: #EFEAF7;        /* 晨霧紫：大面積底色 */
+  --ink: #2E2640;         /* 墨紫：內文 */
+  --white: #FFFFFF;       /* 雲白 */
+  --muted: #615878;
+  --line: #E3DCEE;
+  --danger: #B3364A;
+  --danger-bg: #FBEDEF;
+
+  --font-latin: "Nunito", "Noto Sans TC", "PingFang TC", "Microsoft JhengHei", system-ui, sans-serif;
+  --font-body: "Nunito", "Noto Sans TC", "PingFang TC", "Microsoft JhengHei", system-ui, sans-serif;
+
+  --radius: 14px;
+  --radius-sm: 10px;
+  --gutter-l: max(16px, env(safe-area-inset-left, 0px));
+  --gutter-r: max(16px, env(safe-area-inset-right, 0px));
+  color-scheme: light;
+}
+* { box-sizing: border-box; }
+[hidden] { display: none !important; }
+html, body { background: var(--white); color: var(--ink); }
+body {
+  font-family: var(--font-body);
+  font-size: 16px;
+  line-height: 1.7;
+  -webkit-font-smoothing: antialiased;
+}
+body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-area-inset-top, 0px); z-index: 30; background: var(--white); }
+h1, h2, h3 { color: var(--purple); text-wrap: balance; letter-spacing: .03em; line-height: 1.35; margin: 0; font-weight: 700; }
+p { margin: 0; }
+button { font: inherit; color: inherit; }
+a { color: var(--purple); }
+:focus-visible { outline: 3px solid var(--teal); outline-offset: 2px; border-radius: 6px; }
+.wrap { max-width: 1200px; margin: 0 auto; padding-left: var(--gutter-l); padding-right: var(--gutter-r); }
+.num { font-family: var(--font-latin); font-variant-numeric: tabular-nums; }
+
+/* ---------- header ---------- */
+.site-header {
+  position: sticky; top: env(safe-area-inset-top, 0px); z-index: 20;
+  background: color-mix(in srgb, var(--white) 92%, transparent);
+  backdrop-filter: blur(8px);
+  border-bottom: 1px solid var(--line);
+}
+.site-header .wrap { display: flex; align-items: center; gap: 24px; min-height: 68px; }
+.brand { display: flex; align-items: center; gap: 10px; text-decoration: none; color: var(--purple); flex-shrink: 0; }
+.brand svg { width: 40px; height: 40px; }
+.brand-text { display: flex; flex-direction: column; line-height: 1.15; }
+.brand-text b { font-size: 17px; letter-spacing: .04em; }
+.brand-text small { font-size: 12px; color: var(--muted); letter-spacing: .06em; }
+.main-nav { display: flex; gap: 4px; margin-left: auto; flex-wrap: wrap; }
+.avatar { position: relative; display: flex; align-items: center; gap: 10px; text-decoration: none; flex-shrink: 0; padding: 4px 0; }
+.avatar-label { font-size: 13px; font-weight: 700; color: var(--purple); line-height: 1.3; text-align: right; }
+.avatar-frame { position: relative; width: 60px; height: 60px; border-radius: 50%; overflow: hidden; display: block; background: var(--mist); }
+.avatar-frame img, .avatar-frame svg { width: 100%; height: 100%; object-fit: cover; object-position: center top; display: block; }
+.avatar-arc { position: absolute; right: -6px; top: -2px; width: 72px; height: 72px; pointer-events: none; transition: transform .3s; }
+.avatar-spark { position: absolute; right: -6px; top: -2px; width: 14px; height: 14px; }
+.avatar:hover .avatar-arc { transform: rotate(-20deg); }
+@media (prefers-reduced-motion: reduce) { .avatar-arc { transition: none; } }
+.main-nav a {
+  text-decoration: none; color: var(--ink); font-size: 15px; font-weight: 500;
+  padding: 6px 14px; border-radius: 999px;
+}
+.main-nav a:hover { background: var(--mist); color: var(--purple); }
+@media (max-width: 720px) { .main-nav { display: none; } .avatar { margin-left: auto; } .avatar-label { display: none; } }
+
+/* ---------- hero ---------- */
+.hero { background: var(--mist); position: relative; overflow: hidden; }
+.hero .wrap { position: relative; padding-block: 56px 48px; display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 40px; align-items: center; }
+.hero h1 { font-size: clamp(30px, 4.4vw, 44px); }
+.hero h1 .accent { color: var(--ink); }
+.hero p.lead { margin-top: 14px; font-size: 18px; max-width: 34em; color: var(--ink); }
+.hero-facts { display: flex; flex-wrap: wrap; gap: 10px 22px; margin-top: 22px; font-size: 15px; color: var(--muted); }
+.hero-facts span { display: inline-flex; align-items: center; gap: 8px; }
+.hero-facts svg { width: 18px; height: 18px; flex-shrink: 0; }
+.flow { display: flex; align-items: flex-start; gap: 6px; list-style: none; margin: 0; padding: 0; counter-reset: f; }
+.flow li { display: flex; flex-direction: column; align-items: center; gap: 10px; width: 96px; text-align: center; }
+.flow .disc { position: relative; width: 84px; height: 84px; border-radius: 50%; background: var(--white); display: grid; place-items: center; box-shadow: 0 6px 18px -12px rgba(96, 62, 141, .6); }
+.flow .disc svg { width: 40px; height: 40px; }
+.flow .disc::before { counter-increment: f; content: counter(f); position: absolute; top: -4px; left: -4px; width: 26px; height: 26px; border-radius: 50%; background: var(--purple); color: var(--white); font: 800 14px/26px var(--font-latin); }
+.flow li:last-child .disc::before { background: var(--yellow); color: var(--ink); }
+.flow b { font-size: 15px; color: var(--purple); letter-spacing: .04em; }
+.flow .arrow { width: 34px; height: 84px; display: grid; place-items: center; }
+.flow .arrow svg { width: 30px; height: 30px; }
+.rhythm { position: absolute; right: -40px; bottom: -30px; width: 420px; height: 220px; pointer-events: none; opacity: .5; }
+@media (max-width: 760px) {
+  .hero .wrap { grid-template-columns: 1fr; padding-block: 36px 32px; }
+  .flow { justify-content: center; }
+  .flow li { width: 84px; }
+  .flow .disc { width: 68px; height: 68px; }
+  .flow .disc svg { width: 32px; height: 32px; }
+  .flow .arrow { width: 22px; height: 68px; }
+}
+
+/* ---------- tool grid ---------- */
+.tools-section { padding-block: 48px 64px; }
+.group { margin-top: 36px; }
+.group:first-child { margin-top: 0; }
+.group-head { display: flex; align-items: baseline; gap: 14px; margin-bottom: 16px; }
+.group-head h2 { font-size: 22px; }
+.group-head p { color: var(--muted); font-size: 15px; }
+.grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); gap: 16px; }
+.tool-card {
+  display: flex; flex-direction: column; gap: 10px; text-align: left;
+  padding: 20px 20px 22px; border: 1.5px solid var(--line); border-radius: var(--radius);
+  background: var(--white); text-decoration: none; color: var(--ink);
+  transition: border-color .15s, transform .15s, box-shadow .15s;
+  position: relative;
+}
+.tool-card:hover { border-color: var(--purple); transform: translateY(-2px); box-shadow: 0 8px 22px -14px rgba(96, 62, 141, .55); }
+.tool-card .ico { width: 44px; height: 44px; border-radius: 12px; background: var(--mist); display: grid; place-items: center; }
+.tool-card .ico svg { width: 26px; height: 26px; }
+.tool-card h3 { font-size: 17px; }
+.tool-card p { font-size: 14px; color: var(--muted); line-height: 1.6; }
+.pill {
+  position: absolute; top: 16px; right: 16px; font-size: 12px; font-weight: 600; letter-spacing: .06em;
+  padding: 2px 10px; border-radius: 999px; background: var(--mist); color: var(--purple);
+}
+
+/* ---------- training referral ---------- */
+.services { background: var(--mist); padding-block: 36px 40px; }
+.services-head { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px 24px; margin-bottom: 20px; }
+.services-head h2 { font-size: 22px; }
+.services-head p { color: var(--muted); font-size: 15px; margin-top: 2px; }
+.btn-primary.btn-sm { padding: 9px 20px; font-size: 15px; }
+.asks { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 12px; list-style: none; margin: 0; padding: 0; }
+.asks a { height: 100%; display: flex; flex-direction: column; gap: 6px; background: var(--white); border-radius: var(--radius); padding: 16px; text-decoration: none; color: var(--ink); border: 1.5px solid transparent; transition: border-color .15s; }
+.asks a:hover { border-color: var(--purple); }
+.asks .if { font-size: 12px; font-weight: 700; color: var(--teal); letter-spacing: .08em; }
+.asks .q { font-size: 15px; font-weight: 600; line-height: 1.55; }
+.asks .topic { margin-top: auto; padding-top: 6px; font-size: 13px; color: var(--purple); font-weight: 700; }
+@media (max-width: 1000px) { .asks { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (max-width: 560px) { .asks { grid-template-columns: 1fr; } }
+
+/* ---------- footer ---------- */
+.site-footer { background: var(--purple); color: var(--white); }
+.site-footer .wrap { padding-block: 28px; display: flex; flex-wrap: wrap; justify-content: space-between; gap: 12px 32px; align-items: center; font-size: 14px; }
+.site-footer .slogan b { display: block; font-size: 17px; letter-spacing: .04em; }
+.site-footer .slogan span { color: var(--yellow); font-family: var(--font-latin); font-weight: 600; }
+.site-footer small { color: var(--purple-20); }
+
+/* ---------- tool view ---------- */
+.tool-view { padding-block: 32px 64px; }
+.crumb { font-size: 14px; color: var(--muted); display: inline-flex; align-items: center; gap: 6px; text-decoration: none; }
+.crumb:hover { color: var(--purple); }
+.tool-head { display: flex; gap: 16px; align-items: center; margin: 14px 0 26px; }
+.tool-head .ico { width: 56px; height: 56px; border-radius: 16px; background: var(--mist); display: grid; place-items: center; flex-shrink: 0; }
+.tool-head .ico svg { width: 32px; height: 32px; }
+.tool-head h1 { font-size: clamp(26px, 3.4vw, 34px); }
+.tool-head p { color: var(--muted); margin-top: 2px; }
+
+.drop {
+  position: relative; border: 2px dashed var(--purple-80); border-radius: 22px;
+  background: var(--mist); padding: 56px 24px; text-align: center;
+  display: flex; flex-direction: column; align-items: center; gap: 14px;
+  transition: background .15s, border-color .15s;
+}
+.drop.over { background: var(--purple-20); border-color: var(--purple); }
+.drop svg.big { width: 76px; height: 76px; }
+.drop h2 { font-size: 22px; }
+.drop p { color: var(--muted); font-size: 15px; }
+.drop .hint { font-size: 13px; }
+
+.btn {
+  display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+  border: 0; border-radius: 999px; padding: 12px 26px; font-size: 16px; font-weight: 700;
+  cursor: pointer; text-decoration: none; letter-spacing: .03em; transition: transform .12s, box-shadow .12s, background .12s;
+}
+.btn-primary { background: var(--yellow); color: var(--ink); box-shadow: 0 6px 16px -8px rgba(204, 150, 20, .8); }
+.btn-primary:hover { transform: translateY(-1px); box-shadow: 0 10px 20px -10px rgba(204, 150, 20, .9); }
+.btn-primary:disabled { background: var(--purple-20); color: var(--muted); box-shadow: none; cursor: not-allowed; transform: none; }
+.btn-secondary { background: var(--white); color: var(--purple); border: 1.5px solid var(--purple); padding: 10.5px 22px; }
+.btn-secondary:hover { background: var(--mist); }
+.btn-ghost { background: transparent; color: var(--purple); padding: 8px 14px; font-weight: 600; font-size: 15px; }
+.btn-ghost:hover { background: var(--mist); }
+.btn-block { width: 100%; }
+.btn-sm { padding: 6px 14px; font-size: 14px; }
+
+.work { display: grid; grid-template-columns: minmax(0, 1fr) 320px; gap: 28px; align-items: start; }
+@media (max-width: 900px) { .work { grid-template-columns: 1fr; } }
+.canvas { min-width: 0; }
+.canvas-bar { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; margin-bottom: 14px; }
+.canvas-bar .info { color: var(--muted); font-size: 14px; margin-right: auto; }
+.panel {
+  position: sticky; top: calc(env(safe-area-inset-top, 0px) + 88px);
+  border: 1.5px solid var(--line); border-radius: var(--radius); background: var(--white); padding: 22px;
+  display: flex; flex-direction: column; gap: 18px;
+}
+@media (max-width: 900px) { .panel { position: static; } }
+.panel h2 { font-size: 18px; }
+.field { display: flex; flex-direction: column; gap: 8px; }
+.field > label, .field > .label { font-weight: 600; font-size: 14px; color: var(--ink); }
+.field .help { font-size: 13px; color: var(--muted); line-height: 1.55; }
+.field input[type="text"], .field input[type="number"], .field select, .field textarea {
+  font: inherit; font-size: 15px; color: var(--ink); background: var(--white);
+  border: 1.5px solid var(--line); border-radius: var(--radius-sm); padding: 9px 12px; width: 100%;
+}
+.field input:focus, .field select:focus, .field textarea:focus { outline: none; border-color: var(--purple); }
+.field input[type="range"] { accent-color: var(--purple); width: 100%; }
+.seg { display: grid; grid-auto-flow: column; grid-auto-columns: 1fr; gap: 4px; background: var(--mist); padding: 4px; border-radius: 12px; }
+.seg label { position: relative; text-align: center; font-size: 14px; padding: 7px 6px; border-radius: 9px; cursor: pointer; line-height: 1.35; }
+.seg input { position: absolute; opacity: 0; pointer-events: none; }
+.seg label:has(input:checked) { background: var(--white); color: var(--purple); font-weight: 700; box-shadow: 0 1px 4px rgba(46, 38, 64, .12); }
+.seg label:has(input:focus-visible) { outline: 3px solid var(--teal); }
+.choices { display: flex; flex-direction: column; gap: 8px; }
+.choice { display: flex; gap: 12px; align-items: flex-start; padding: 12px 14px; border: 1.5px solid var(--line); border-radius: 12px; cursor: pointer; }
+.choice:has(input:checked) { border-color: var(--purple); background: var(--mist); }
+.choice input { accent-color: var(--purple); margin-top: 5px; }
+.choice b { display: block; font-size: 15px; color: var(--purple); }
+.choice span { font-size: 13px; color: var(--muted); line-height: 1.5; }
+.check { display: flex; gap: 10px; align-items: center; font-size: 15px; cursor: pointer; }
+.check input { accent-color: var(--purple); width: 18px; height: 18px; }
+.swatches { display: flex; gap: 10px; }
+.swatches label { width: 32px; height: 32px; border-radius: 50%; cursor: pointer; border: 2px solid var(--white); box-shadow: 0 0 0 1.5px var(--line); position: relative; }
+.swatches input { position: absolute; opacity: 0; }
+.swatches label:has(input:checked) { box-shadow: 0 0 0 2.5px var(--purple); }
+.swatches label:has(input:focus-visible) { outline: 3px solid var(--teal); outline-offset: 3px; }
+.posgrid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; width: 132px; padding: 8px; background: var(--mist); border-radius: 10px; aspect-ratio: 210/297; max-width: 100%; align-content: space-between; }
+.posgrid label { height: 26px; border-radius: 6px; cursor: pointer; position: relative; display: grid; place-items: center; }
+.posgrid label::after { content: ""; width: 14px; height: 6px; border-radius: 3px; background: var(--purple-20); }
+.posgrid input { position: absolute; opacity: 0; }
+.posgrid label:has(input:checked)::after { background: var(--purple); }
+.posgrid label:has(input:focus-visible) { outline: 3px solid var(--teal); }
+.posgrid .gap { grid-column: span 3; height: 0; }
+
+/* file list (merge / images) */
+.files { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 14px; }
+.fcard {
+  position: relative; border: 1.5px solid var(--line); border-radius: var(--radius); background: var(--white);
+  padding: 12px 12px 10px; display: flex; flex-direction: column; gap: 8px; cursor: grab;
+}
+.fcard.dragging { opacity: .4; }
+.fcard.drop-before { box-shadow: -4px 0 0 0 var(--teal); }
+.fcard .thumb { aspect-ratio: 3/4; background: var(--mist); border-radius: 8px; display: grid; place-items: center; overflow: hidden; max-width: 100%; }
+.fcard .thumb img, .fcard .thumb canvas { max-width: 100%; max-height: 100%; box-shadow: 0 1px 4px rgba(46, 38, 64, .18); background: #fff; }
+.fcard .name { font-size: 13px; font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.fcard .meta { font-size: 12px; color: var(--muted); }
+.fcard .order { position: absolute; top: 6px; left: 6px; min-width: 24px; height: 24px; border-radius: 12px; background: var(--purple); color: var(--white); font-size: 12px; font-weight: 800; display: grid; place-items: center; padding: 0 6px; font-family: var(--font-latin); }
+.fcard .acts { display: flex; gap: 2px; justify-content: flex-end; }
+.icon-btn { border: 0; background: transparent; border-radius: 8px; width: 30px; height: 30px; display: grid; place-items: center; cursor: pointer; color: var(--purple); }
+.icon-btn:hover { background: var(--mist); }
+.icon-btn svg { width: 18px; height: 18px; }
+.add-tile { border: 2px dashed var(--purple-20); border-radius: var(--radius); display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px; color: var(--purple); font-weight: 600; font-size: 14px; cursor: pointer; background: transparent; min-height: 200px; }
+.add-tile:hover { border-color: var(--purple); background: var(--mist); }
+.add-tile svg { width: 28px; height: 28px; }
+
+/* page grid */
+.pages { display: grid; grid-template-columns: repeat(auto-fill, minmax(124px, 1fr)); gap: 14px; }
+.pcard { position: relative; border: 2px solid transparent; border-radius: 12px; padding: 8px; background: var(--white); cursor: pointer; display: flex; flex-direction: column; align-items: center; gap: 6px; transition: border-color .12s, background .12s; }
+.pcard:hover { background: var(--mist); }
+.pcard .thumb { width: 100%; aspect-ratio: 3/4; display: grid; place-items: center; }
+.pcard .thumb canvas { max-width: 100%; max-height: 100%; box-shadow: 0 1px 5px rgba(46, 38, 64, .2); background: #fff; transition: transform .2s; }
+.pcard .pn { font-size: 13px; color: var(--muted); font-family: var(--font-latin); font-weight: 600; }
+.pcard.sel-remove { border-color: var(--danger); background: var(--danger-bg); }
+.pcard.sel-remove canvas { opacity: .35; }
+.pcard.sel-keep { border-color: var(--teal); background: #E9F8F6; }
+.pcard .badge { position: absolute; top: 4px; right: 4px; width: 26px; height: 26px; border-radius: 50%; display: none; place-items: center; color: var(--white); }
+.pcard .badge svg { width: 16px; height: 16px; }
+.pcard.sel-remove .badge { display: grid; background: var(--danger); }
+.pcard.sel-keep .badge { display: grid; background: var(--teal); }
+.pcard .acts { display: flex; gap: 2px; }
+.pcard.dragging { opacity: .4; }
+.pcard.drop-before { box-shadow: -4px 0 0 0 var(--teal); }
+.placeholder-page { width: 70%; aspect-ratio: 210/297; background: var(--mist); border-radius: 4px; }
+
+/* text preview */
+.textprev { width: 100%; min-height: 320px; font: 14px/1.7 var(--font-body); color: var(--ink); border: 1.5px solid var(--line); border-radius: var(--radius); padding: 16px; resize: vertical; background: var(--white); }
+
+/* processing + result */
+.overlay { position: fixed; inset: 0; background: rgba(46, 38, 64, .45); display: grid; place-items: center; z-index: 50; padding: 16px; }
+.overlay-card { background: var(--white); border-radius: 22px; padding: 32px 28px; width: min(420px, 100%); text-align: center; display: flex; flex-direction: column; gap: 14px; align-items: center; }
+.overlay-card h2 { font-size: 20px; }
+.overlay-card p { color: var(--muted); font-size: 15px; }
+.bar { width: 100%; height: 10px; background: var(--mist); border-radius: 5px; overflow: hidden; }
+.bar i { display: block; height: 100%; width: 0; background: var(--purple); border-radius: 5px; transition: width .2s; }
+.spin { width: 64px; height: 64px; }
+.spin .arc { transform-origin: 32px 32px; animation: rot 1.1s linear infinite; }
+@keyframes rot { to { transform: rotate(360deg); } }
+@media (prefers-reduced-motion: reduce) { .spin .arc { animation: none; } .tool-card, .btn { transition: none; } }
+
+.result { max-width: 640px; margin: 8px auto 0; text-align: center; display: flex; flex-direction: column; align-items: center; gap: 16px; }
+.result .ok { width: 96px; height: 96px; }
+.result h2 { font-size: 28px; }
+.result .stats { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; justify-content: center; font-size: 15px; color: var(--muted); }
+.result .stats b { color: var(--ink); }
+.result .saving { background: #E9F8F6; color: #1D6E66; font-weight: 700; padding: 2px 10px; border-radius: 999px; }
+.result .row { display: flex; gap: 10px; flex-wrap: wrap; justify-content: center; }
+.next { margin-top: 28px; width: 100%; text-align: left; }
+.next h3 { font-size: 16px; margin-bottom: 10px; }
+.next .grid { grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 10px; }
+.next .tool-card { padding: 14px; flex-direction: row; align-items: center; gap: 12px; }
+.next .tool-card .ico { width: 36px; height: 36px; flex-shrink: 0; }
+.next .tool-card .ico svg { width: 22px; height: 22px; }
+.next .tool-card h3 { font-size: 15px; }
+
+.notice { border-radius: 12px; padding: 12px 14px; font-size: 14px; line-height: 1.6; background: var(--mist); color: var(--ink); }
+.notice.error { background: var(--danger-bg); color: var(--danger); }
+.toast { position: fixed; left: 50%; bottom: calc(24px + env(safe-area-inset-bottom, 0px)); transform: translateX(-50%); background: var(--ink); color: var(--white); padding: 10px 18px; border-radius: 999px; font-size: 14px; z-index: 60; max-width: calc(100% - 32px); }
+.sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); }
+</style>
+
+<!-- Brand symbol, rebuilt from the CIS grid spec (200×200, r74, 57° opening at 46°, 37° rising check). Swap for brand/logo/定稿v3_標誌_標準色.svg when available. -->
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <defs>
+    <symbol id="logo" viewBox="0 0 200 200">
+      <path d="M119.8 32.7 A74 74 0 1 0 170.6 81.7" fill="none" stroke="#603E8D" stroke-width="9" stroke-linecap="round"/>
+      <path d="M81 67 H119 M89.5 67 V93 L64 136.5 Q61 141.5 67 141.5 H133 Q139 141.5 136 136.5 L110.5 93 V67" fill="none" stroke="#603E8D" stroke-width="9" stroke-linecap="round" stroke-linejoin="round"/>
+      <path d="M70.5 112 C69 126 80 134 93 132.5 C112 130.5 128 113 142 93 C125 108 106 120.5 89 121.5 C80 122 74 119 70.5 112 Z" fill="#36C2B4"/>
+      <path d="M155 28 Q157.5 44.7 174 47.2 Q157.5 49.7 155 66.2 Q152.5 49.7 136 47.2 Q152.5 44.7 155 28 Z" fill="#FFC94A"/>
+    </symbol>
+    <symbol id="spark" viewBox="0 0 40 40"><path d="M20 1 Q22.8 17.2 39 20 Q22.8 22.8 20 39 Q17.2 22.8 1 20 Q17.2 17.2 20 1 Z" fill="#FFC94A"/></symbol>
+  </defs>
+</svg>
+
+<header class="site-header">
+  <div class="wrap">
+    <a class="brand" href="#" aria-label="秉軒老師的 PDF 工具箱首頁">
+      <svg aria-hidden="true"><use href="#logo"/></svg>
+      <span class="brand-text"><b>秉軒老師的 PDF 工具箱</b><small>AI效能實驗室</small></span>
+    </a>
+    <nav class="main-nav" aria-label="常用工具">
+      <a href="#merge">合併</a>
+      <a href="#split">分割</a>
+      <a href="#compress">壓縮</a>
+      <a href="#img2pdf">圖片轉 PDF</a>
+      <a href="#" data-home="1">全部工具</a>
+    </nav>
+    <a class="avatar" href="https://ai-efficiency-lab-site.vercel.app/#about" target="_blank" rel="noopener" aria-label="聯繫作者（另開新頁）">
+      <span class="avatar-label">聯繫作者</span>
+      <span class="avatar-frame">
+        <img src="data:image/jpeg;base64,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" alt="" width="60" height="60">
+      </span>
+      <svg class="avatar-arc" viewBox="0 0 64 64" aria-hidden="true"><path d="M37.6 4.5 A28 28 0 1 0 59.3 26" fill="none" stroke="#603E8D" stroke-width="1.8" stroke-linecap="round" stroke-dasharray="3 4.2"/></svg>
+      <svg class="avatar-spark" aria-hidden="true"><use href="#spark"/></svg>
+    </a>
+  </div>
+</header>
+
+<main id="app"></main>
+
+<footer class="site-footer">
+  <div class="wrap">
+    <div class="slogan"><b>是你，讓 AI 更強大</b><span>You Make AI Stronger.</span></div>
+    <small>AI效能實驗室－秉軒老師 ｜ 所有檔案都在你的瀏覽器內處理，不會上傳到任何伺服器。</small>
+  </div>
+</footer>
+
+<div id="overlay" class="overlay" hidden>
+  <div class="overlay-card" role="status" aria-live="polite">
+    <svg class="spin" viewBox="0 0 64 64" aria-hidden="true">
+      <circle cx="32" cy="32" r="24" fill="none" stroke="#EFEAF7" stroke-width="6"/>
+      <g class="arc"><path d="M32 8 A24 24 0 0 1 56 32" fill="none" stroke="#603E8D" stroke-width="6" stroke-linecap="round"/></g>
+    </svg>
+    <h2 id="ov-title">處理中</h2>
+    <div class="bar"><i id="ov-bar"></i></div>
+    <p id="ov-text">準備檔案…</p>
+  </div>
+</div>
+<div id="toast" class="toast" hidden></div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf-lib/1.17.1/pdf-lib.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+<script>
+(() => {
+'use strict';
+
+/* ================= icons ================= */
+// Single-line, round caps/joins, purple; one teal element where emphasis helps (CIS ch.10).
+const P = '#603E8D', T = '#36C2B4';
+const svg = (inner, vb = '0 0 24 24') => `<svg viewBox="${vb}" fill="none" stroke="${P}" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${inner}</svg>`;
+const doc = 'M6 3h8l4 4v14H6z M14 3v4h4';
+const ICONS = {
+  merge: svg(`<path d="M3 4h7v9H3z M14 11h7v9h-7z"/><path d="M10 8.5h3a2 2 0 0 1 2 2v.5" stroke="${T}"/><path d="M13.5 9.5 15 11l1.5-1.5" stroke="${T}"/>`),
+  split: svg(`<path d="M4 3h7v18H4z"/><path d="M14 3h6v8h-6z M14 13h6v8h-6z" stroke="${T}"/>`),
+  remove: svg(`<path d="${doc}"/><path d="M9.5 12.5l5 5M14.5 12.5l-5 5" stroke="${T}"/>`),
+  extract: svg(`<path d="M4 4h9v13H4z"/><path d="M11 9h9v12h-9z" stroke="${T}"/>`),
+  organize: svg(`<path d="M3 4h6v7H3z M15 4h6v7h-6z M3 14h6v7H3z M15 14h6v7h-6z"/><path d="M10.5 7.5h3M12 6l1.5 1.5L12 9" stroke="${T}"/>`),
+  rotate: svg(`<path d="M7 7h10v13H7z"/><path d="M4 9a8 8 0 0 1 13-5.5M17 1v3h-3" stroke="${T}"/>`),
+  compress: svg(`<path d="${doc}"/><path d="M12 9v3.5M10 11l2 2 2-2M12 19v-3.5M10 17l2-2 2 2" stroke="${T}"/>`),
+  img2pdf: svg(`<rect x="3" y="4" width="13" height="11" rx="1.5"/><path d="M3 12.5l3.5-3.5 4 4M10 11l2-2 4 4"/><circle cx="12.5" cy="7.5" r="1"/><path d="M13 13h8v8h-8z" stroke="${T}"/>`),
+  pdf2img: svg(`<path d="M4 3h7l3 3v9H4z"/><rect x="11" y="11" width="10" height="10" rx="1.5" stroke="${T}"/><path d="M11 18.5l3-3 3.5 3.5M16 17l1.5-1.5L21 19" stroke="${T}"/>`),
+  pdf2txt: svg(`<path d="${doc}"/><path d="M9 11h6M9 14h6M9 17h4" stroke="${T}"/>`),
+  watermark: svg(`<path d="${doc}"/><path d="M8.5 17.5l7-6.5" stroke="${T}" stroke-width="2.2"/>`),
+  pagenum: svg(`<path d="${doc}"/><path d="M10.5 14.5l1.5-1v5M10.5 18.5h3" stroke="${T}"/>`),
+  pdf2word: svg(`<path d="${doc}"/><path d="M8.5 11l1.2 6 2.3-4.5 2.3 4.5 1.2-6"/>`),
+  office2pdf: svg(`<rect x="3" y="5" width="11" height="14" rx="1.5"/><path d="M6 9h5M6 12h5M6 15h3"/><path d="M15 9h6v10h-6"/>`),
+  protect: svg(`<rect x="5" y="10" width="14" height="11" rx="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/><path d="M12 14v3"/>`),
+  sign: svg(`<path d="M3 19c3-1 4-6 6-6s0 5 3 5 3-4 5-4"/><path d="M14 4l4 4-8 8H6v-4z"/>`),
+  ocr: svg(`<path d="M3 8V4h4M17 4h4v4M21 16v4h-4M7 20H3v-4"/><path d="M8 10h8M8 14h5"/>`),
+  upload: svg(`<path d="M12 16V4M7 9l5-5 5 5"/><path d="M4 15v4a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-4"/>`),
+  up: svg(`<path d="M15 6l-6 6 6 6"/>`),
+  down: svg(`<path d="M9 6l6 6-6 6"/>`),
+  x: svg(`<path d="M6 6l12 12M18 6L6 18"/>`),
+  rotL: svg(`<path d="M5 12a7 7 0 1 0 2.2-5.1M5 3v4h4"/>`),
+  rotR: svg(`<path d="M19 12a7 7 0 1 1-2.2-5.1M19 3v4h-4"/>`),
+  plus: svg(`<path d="M12 5v14M5 12h14"/>`),
+  back: svg(`<path d="M15 6l-6 6 6 6"/>`),
+  check: `<svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>`,
+  cross: `<svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round" aria-hidden="true"><path d="M7 7l10 10M17 7L7 17"/></svg>`,
+  lock: svg(`<rect x="5" y="10" width="14" height="10" rx="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/>`),
+  bolt: svg(`<path d="M13 3L5 13h6l-1 8 8-10h-6z"/>`),
+  free: svg(`<path d="M5 12.5l4.5 4.5L19 7.5" stroke="${T}" stroke-width="2"/>`),
+};
+
+/* ================= tool catalog ================= */
+const GROUPS = [
+  { id: 'organize', name: '整理頁面', note: '合併、拆分、調整頁序' },
+  { id: 'convert', name: '壓縮與轉換', note: '寄信前先瘦身，PDF 與圖片、文字互轉' },
+  { id: 'edit', name: '編輯內容', note: '加上浮水印與頁碼' },
+];
+const TOOLS = [
+  { id: 'merge', group: 'organize', name: '合併 PDF', desc: '把多份 PDF 依你排好的順序，合成一份檔案。', input: 'pdf', multi: true, cta: '合併 PDF' },
+  { id: 'split', group: 'organize', name: '分割 PDF', desc: '依頁碼範圍拆成幾份，或每一頁各存一份。', input: 'pdf', cta: '分割 PDF' },
+  { id: 'remove', group: 'organize', name: '刪除頁面', desc: '點選不要的頁面，一次移除後另存新檔。', input: 'pdf', cta: '刪除選取頁面' },
+  { id: 'extract', group: 'organize', name: '擷取頁面', desc: '只挑出需要的幾頁，存成一份新的 PDF。', input: 'pdf', cta: '擷取頁面' },
+  { id: 'organize', group: 'organize', name: '整理頁面', desc: '拖曳調整頁序，順手旋轉或刪掉單頁。', input: 'pdf', cta: '套用並下載' },
+  { id: 'rotate', group: 'organize', name: '旋轉 PDF', desc: '整份或單頁轉 90°，掃描歪掉的頁面一次轉正。', input: 'pdf', cta: '旋轉 PDF' },
+  { id: 'compress', group: 'convert', name: '壓縮 PDF', desc: '降低檔案大小，Email 附件不再超過上限。', input: 'pdf', cta: '壓縮 PDF' },
+  { id: 'img2pdf', group: 'convert', name: '圖片轉 PDF', desc: 'JPG、PNG 照片排好順序，合成一份 PDF。', input: 'image', multi: true, cta: '轉成 PDF' },
+  { id: 'pdf2img', group: 'convert', name: 'PDF 轉圖片', desc: '每一頁轉成 JPG 或 PNG，方便放進簡報或社群。', input: 'pdf', cta: '轉成圖片' },
+  { id: 'pdf2txt', group: 'convert', name: 'PDF 轉文字', desc: '抽出 PDF 裡的文字，存成可編輯的 .txt。', input: 'pdf', cta: '擷取文字' },
+  { id: 'watermark', group: 'edit', name: '加入浮水印', desc: '每一頁蓋上文字浮水印，中文也能用。', input: 'pdf', cta: '加入浮水印' },
+  { id: 'pagenum', group: 'edit', name: '加入頁碼', desc: '選好位置與格式，自動為每一頁編號。', input: 'pdf', cta: '加入頁碼' },
+];
+const NEXT = {
+  merge: ['compress', 'pagenum', 'organize'], split: ['merge', 'compress'], remove: ['compress', 'pagenum'],
+  extract: ['merge', 'compress'], organize: ['pagenum', 'compress'], rotate: ['compress', 'merge'],
+  compress: ['merge', 'split'], img2pdf: ['compress', 'merge'], pdf2img: ['img2pdf', 'compress'],
+  pdf2txt: ['pdf2img', 'split'], watermark: ['compress', 'pagenum'], pagenum: ['compress', 'watermark'],
+};
+const SITE = 'https://ai-efficiency-lab-site.vercel.app/';
+const ASKS = [
+  { q: '客戶名單一大串，卻不知道該先追誰？', topic: 'B2B 商務開發與 AI 目標管理' },
+  { q: '財報看得懂，卻講不清楚給老闆和同仁聽？', topic: 'AI 財務策略與簡報' },
+  { q: 'JD 寫不出亮點，面試題每次都從頭想？', topic: 'AI 人資：招募到育才' },
+  { q: '貼文沒人看，商品圖每次都要外包？', topic: '社群圖文與 AI 商務繪圖' },
+  { q: '想拍短影音，卻卡在腳本、分鏡和剪輯？', topic: '短影音 AI 工具包' },
+];
+const FLOW = {
+  pick: `<svg viewBox="0 0 40 40" fill="none" stroke="#603E8D" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="6" y="6" width="11" height="11" rx="2.5"/><rect x="23" y="6" width="11" height="11" rx="2.5"/><rect x="6" y="23" width="11" height="11" rx="2.5"/><rect x="23" y="23" width="11" height="11" rx="2.5" stroke="#36C2B4"/></svg>`,
+  up: `<svg viewBox="0 0 40 40" fill="none" stroke="#603E8D" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10 5h14l7 7v23H10z M24 5v7h7"/><path d="M20.5 29V18M16 22.5l4.5-4.5 4.5 4.5" stroke="#36C2B4"/></svg>`,
+  down: `<svg viewBox="0 0 40 40" fill="none" stroke="#603E8D" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6v18M13 17l7 7 7-7"/><path d="M7 26v5a3 3 0 0 0 3 3h20a3 3 0 0 0 3-3v-5" stroke="#36C2B4"/></svg>`,
+};
+const byId = Object.fromEntries(TOOLS.map(t => [t.id, t]));
+
+/* ================= helpers ================= */
+const $ = (s, r = document) => r.querySelector(s);
+const $$ = (s, r = document) => [...r.querySelectorAll(s)];
+const app = $('#app');
+const esc = s => String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+const fmtSize = b => b < 1024 ? b + ' B' : b < 1048576 ? (b / 1024).toFixed(1) + ' KB' : (b / 1048576).toFixed(2) + ' MB';
+const baseName = n => n.replace(/\.[^.]+$/, '');
+const tick = () => new Promise(r => setTimeout(r, 0));
+const { PDFDocument, degrees } = PDFLib;
+
+if (window.pdfjsLib) pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+
+function toast(msg, ms = 3200) {
+  const t = $('#toast'); t.textContent = msg; t.hidden = false;
+  clearTimeout(toast._t); toast._t = setTimeout(() => { t.hidden = true; }, ms);
+}
+const overlay = {
+  show(title) { $('#ov-title').textContent = title; this.set(0, '準備檔案…'); $('#overlay').hidden = false; },
+  set(frac, text) { $('#ov-bar').style.width = Math.round(frac * 100) + '%'; if (text) $('#ov-text').textContent = text; },
+  hide() { $('#overlay').hidden = true; },
+};
+
+// Saving: inside a claude.ai viewer use the downloads capability; elsewhere (self-hosted) a normal download link.
+let dlPromise;
+function getDownloads() {
+  if (!dlPromise) {
+    dlPromise = (window.claude && typeof window.claude.use === 'function')
+      ? Promise.race([window.claude.use('downloads').catch(() => null), new Promise(r => setTimeout(() => r(null), 4000))])
+      : Promise.resolve(null);
+  }
+  return dlPromise;
+}
+async function saveFile(filename, blob) {
+  const dl = await getDownloads();
+  if (dl) {
+    try { await dl.save({ filename, data: blob }); toast('已儲存 ' + filename); }
+    catch (e) {
+      if (e && e.code === 'declined') toast('已取消儲存');
+      else if (e && e.code === 'rate_limited') toast('上一個儲存視窗還開著，請先完成它');
+      else toast('這個檢視畫面無法儲存檔案，請在瀏覽器中開啟本頁');
+    }
+    return;
+  }
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a'); a.href = url; a.download = filename;
+  document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 30000);
+}
+
+async function readBytes(file) { return new Uint8Array(await file.arrayBuffer()); }
+async function loadPdf(bytes) {
+  try { return await PDFDocument.load(bytes, { updateMetadata: false }); }
+  catch (e) {
+    if (/encrypt/i.test(String(e && e.message))) throw new Error('這份 PDF 有密碼保護，請先移除密碼後再上傳。');
+    throw new Error('無法讀取這份 PDF，檔案可能已損毀。');
+  }
+}
+async function openJs(bytes) { return pdfjsLib.getDocument({ data: bytes.slice(0) }).promise; }
+const pdfBlob = bytes => new Blob([bytes], { type: 'application/pdf' });
+
+async function renderThumb(pdf, pageNo, maxW = 160) {
+  const page = await pdf.getPage(pageNo);
+  const vp1 = page.getViewport({ scale: 1 });
+  const scale = Math.min(maxW / vp1.width, (maxW * 1.4) / vp1.height) * (window.devicePixelRatio > 1 ? 2 : 1);
+  const vp = page.getViewport({ scale });
+  const c = document.createElement('canvas');
+  c.width = Math.ceil(vp.width); c.height = Math.ceil(vp.height);
+  await page.render({ canvasContext: c.getContext('2d'), viewport: vp }).promise;
+  c.style.width = (c.width / (window.devicePixelRatio > 1 ? 2 : 1)) + 'px';
+  page.cleanup();
+  return c;
+}
+
+function parseRanges(str, total) {
+  const groups = [];
+  for (const raw of str.split(/[,，、\s]+/).filter(Boolean)) {
+    const m = raw.match(/^(\d+)?\s*[-~–]\s*(\d+)?$/) || raw.match(/^(\d+)$/);
+    if (!m) throw new Error(`看不懂「${raw}」，請用像 1-3, 5, 8- 這樣的格式。`);
+    let a, b;
+    if (m.length === 2) { a = b = +m[1]; } else { a = m[1] ? +m[1] : 1; b = m[2] ? +m[2] : total; }
+    if (a < 1 || b > total || a > b) throw new Error(`「${raw}」超出範圍，這份檔案共 ${total} 頁。`);
+    groups.push({ label: a === b ? `${a}` : `${a}-${b}`, idx: Array.from({ length: b - a + 1 }, (_, i) => a - 1 + i) });
+  }
+  if (!groups.length) throw new Error('請輸入至少一個頁碼範圍。');
+  return groups;
+}
+
+// Text → transparent PNG via canvas, so Chinese renders without embedding a CJK font in the PDF.
+async function textImage(text, { size, color, opacity = 1, angle = 0, weight = 700 }) {
+  const k = 4;
+  const font = `${weight} ${size * k}px "Noto Sans TC", "Nunito", "PingFang TC", "Microsoft JhengHei", sans-serif`;
+  try { await document.fonts.load(font, text); } catch (_) {}
+  const m = document.createElement('canvas').getContext('2d');
+  m.font = font;
+  const w = Math.ceil(m.measureText(text).width) + 8 * k, h = Math.ceil(size * k * 1.4);
+  const rad = angle * Math.PI / 180;
+  const W = Math.ceil(Math.abs(w * Math.cos(rad)) + Math.abs(h * Math.sin(rad)));
+  const H = Math.ceil(Math.abs(w * Math.sin(rad)) + Math.abs(h * Math.cos(rad)));
+  const c = document.createElement('canvas'); c.width = W; c.height = H;
+  const ctx = c.getContext('2d');
+  ctx.translate(W / 2, H / 2); ctx.rotate(-rad);
+  ctx.font = font; ctx.fillStyle = color; ctx.globalAlpha = opacity;
+  ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+  ctx.fillText(text, 0, 0);
+  const blob = await new Promise(r => c.toBlob(r, 'image/png'));
+  return { bytes: new Uint8Array(await blob.arrayBuffer()), w: W / k, h: H / k };
+}
+
+/* ================= state ================= */
+let state = null;
+function resetState(tool) {
+  state = { tool, files: [], pages: [], js: null, bytes: null, result: null };
+}
+
+/* ================= routing ================= */
+function route() {
+  const id = location.hash.replace('#', '');
+  const tool = byId[id];
+  window.scrollTo(0, 0);
+  if (tool && !tool.soon) { resetState(tool); renderTool(); }
+  else renderHome();
+}
+window.addEventListener('hashchange', route);
+document.addEventListener('click', e => {
+  const a = e.target.closest('a[data-home]');
+  if (a) { e.preventDefault(); if (location.hash) location.hash = ''; else renderHome(); setTimeout(() => $('#tools')?.scrollIntoView({ behavior: 'smooth' }), 30); }
+});
+
+/* ================= home ================= */
+function toolCard(t) {
+  return `<a class="tool-card" href="#${t.id}"><div class="ico">${ICONS[t.id]}</div><h3>${t.name}</h3><p>${t.desc}</p></a>`;
+}
+function renderHome() {
+  document.title = '秉軒老師的 PDF 工具箱';
+  app.innerHTML = `
+  <section class="hero">
+    <svg class="rhythm" viewBox="0 0 420 220" aria-hidden="true">
+      <g stroke="#603E8D" stroke-width="3" stroke-linecap="round" opacity=".35">
+        <line x1="60" y1="220" x2="352" y2="0"/><line x1="120" y1="220" x2="412" y2="0"/><line x1="180" y1="220" x2="472" y2="0"/>
+      </g>
+    </svg>
+    <div class="wrap">
+      <div>
+        <h1>PDF 的小事，<span class="accent">三步就搞定</span></h1>
+        <p class="lead">合併報價單、拆出合約附件、壓縮掃描檔再寄出。選一個工具、放進檔案、按下按鈕，整份文件就整理好了。</p>
+        <div class="hero-facts">
+          <span>${ICONS.lock}檔案只在你的瀏覽器裡處理</span>
+          <span>${ICONS.free}免註冊、免安裝</span>
+          <span>${ICONS.bolt}12 種工具，支援中文</span>
+        </div>
+      </div>
+      <ol class="flow" aria-label="三個步驟">
+        <li><span class="disc">${FLOW.pick}</span><b>選工具</b></li>
+        <li class="arrow" aria-hidden="true"><svg viewBox="0 0 30 30" fill="none" stroke="#36C2B4" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 21L24 9M17 8.5l7 .5-1 7"/></svg></li>
+        <li><span class="disc">${FLOW.up}</span><b>放進檔案</b></li>
+        <li class="arrow" aria-hidden="true"><svg viewBox="0 0 30 30" fill="none" stroke="#36C2B4" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 21L24 9M17 8.5l7 .5-1 7"/></svg></li>
+        <li><span class="disc">${FLOW.down}</span><b>下載結果</b></li>
+      </ol>
+    </div>
+  </section>
+  <section class="tools-section" id="tools">
+    <div class="wrap">
+      ${GROUPS.map(g => `
+        <div class="group">
+          <div class="group-head"><h2>${g.name}</h2><p>${g.note}</p></div>
+          <div class="grid">${TOOLS.filter(t => t.group === g.id).map(toolCard).join('')}</div>
+        </div>`).join('')}
+    </div>
+  </section>
+  <section class="services" id="services">
+    <div class="wrap">
+      <div class="services-head">
+        <div>
+          <h2>工作上也想用 AI 解決？</h2>
+          <p>秉軒老師的企業 AI 培訓，從你最花時間的一件事開始。</p>
+        </div>
+        <a class="btn btn-primary btn-sm" href="${SITE}" target="_blank" rel="noopener">看完整課程 →</a>
+      </div>
+      <ul class="asks">${ASKS.map(a => `
+        <li><a href="${SITE}" target="_blank" rel="noopener"><span class="if">如果你遇到⋯⋯</span><span class="q">${a.q}</span><span class="topic">${a.topic} →</span></a></li>`).join('')}
+      </ul>
+    </div>
+  </section>`;
+}
+
+/* ================= tool view ================= */
+function renderTool() {
+  const t = state.tool;
+  document.title = t.name + '｜秉軒老師的 PDF 工具箱';
+  app.innerHTML = `
+  <section class="tool-view"><div class="wrap">
+    <a class="crumb" href="#" data-home="1">${ICONS.back.replace('<svg', '<svg width="16" height="16"')}全部工具</a>
+    <div class="tool-head"><div class="ico">${ICONS[t.id]}</div><div><h1>${t.name}</h1><p>${t.desc}</p></div></div>
+    <div id="stage"></div>
+  </div></section>`;
+  renderDrop();
+}
+
+function acceptAttr(t) { return t.input === 'image' ? 'image/jpeg,image/png,image/webp,image/gif,image/bmp' : 'application/pdf,.pdf'; }
+function pickFiles(multi, cb) {
+  const inp = document.createElement('input');
+  inp.type = 'file'; inp.accept = acceptAttr(state.tool); inp.multiple = !!multi;
+  inp.hidden = true;
+  inp.addEventListener('change', () => { cb([...inp.files]); inp.remove(); });
+  document.body.appendChild(inp);
+  inp.click();
+}
+function filterFiles(list) {
+  const t = state.tool;
+  const ok = list.filter(f => t.input === 'image' ? /^image\//.test(f.type) : (f.type === 'application/pdf' || /\.pdf$/i.test(f.name)));
+  if (ok.length < list.length) toast(t.input === 'image' ? '只接受 JPG、PNG、WebP、GIF 圖片，其他檔案已略過' : '只接受 PDF 檔，其他檔案已略過');
+  return t.multi ? ok : ok.slice(0, 1);
+}
+
+function renderDrop() {
+  const t = state.tool;
+  const stage = $('#stage');
+  const what = t.input === 'image' ? '圖片' : 'PDF';
+  stage.innerHTML = `
+    <div class="drop" id="drop">
+      <svg class="big" viewBox="0 0 80 80" aria-hidden="true">
+        <path d="M44.6 7.3 A33 33 0 1 0 72.8 34.5" fill="none" stroke="#603E8D" stroke-width="4" stroke-linecap="round"/>
+        <path d="M40 52V27M30 36l10-10 10 10" fill="none" stroke="#603E8D" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+        <use href="#spark" x="58" y="4" width="16" height="16"/>
+      </svg>
+      <h2>把${what}拖到這裡</h2>
+      <button class="btn btn-primary" id="pick" type="button">選擇${what}檔案</button>
+      <p class="hint">${t.multi ? `可一次選多個檔案，之後還能再加入或調整順序。` : `一次處理一份${what}。`}檔案不會上傳，關掉分頁就清除。</p>
+    </div>`;
+  const drop = $('#drop');
+  $('#pick').addEventListener('click', () => pickFiles(t.multi, onFiles));
+  ['dragenter', 'dragover'].forEach(ev => drop.addEventListener(ev, e => { e.preventDefault(); drop.classList.add('over'); }));
+  ['dragleave', 'drop'].forEach(ev => drop.addEventListener(ev, e => { e.preventDefault(); drop.classList.remove('over'); }));
+  drop.addEventListener('drop', e => onFiles([...e.dataTransfer.files]));
+}
+
+async function onFiles(list) {
+  const files = filterFiles(list);
+  if (!files.length) return;
+  const t = state.tool;
+  if (t.multi) {
+    for (const f of files) state.files.push({ id: Math.random().toString(36).slice(2), file: f, thumb: null, pages: null, err: null });
+    renderWork();
+    loadFileThumbs();
+  } else {
+    overlay.show('讀取檔案');
+    try {
+      const bytes = await readBytes(files[0]);
+      await loadPdf(bytes); // validates + detects encryption
+      state.file = files[0]; state.bytes = bytes;
+      state.js = await openJs(bytes);
+      state.pages = Array.from({ length: state.js.numPages }, (_, i) => ({ i, rot: 0, sel: false, canvas: null }));
+      overlay.hide();
+      renderWork();
+      loadPageThumbs();
+    } catch (e) { overlay.hide(); toast(e.message || '讀取失敗'); }
+  }
+}
+
+/* ---------- workspace ---------- */
+function renderWork() {
+  const t = state.tool;
+  const stage = $('#stage');
+  stage.innerHTML = `
+    <div class="work">
+      <div class="canvas" id="canvas"></div>
+      <aside class="panel" aria-label="設定">
+        <h2>設定</h2>
+        <form id="opts" class="opts" style="display:flex;flex-direction:column;gap:18px">${optionsHtml(t)}</form>
+        <div id="msg"></div>
+        <button class="btn btn-primary btn-block" id="go" type="button">${t.cta} →</button>
+        <button class="btn btn-ghost btn-block" id="restart" type="button">換一份檔案</button>
+      </aside>
+    </div>`;
+  $('#go').addEventListener('click', run);
+  $('#restart').addEventListener('click', () => { resetState(t); renderDrop(); });
+  $('#opts').addEventListener('submit', e => e.preventDefault());
+  $('#opts').addEventListener('input', onOptsChange);
+  onOptsChange();
+  renderCanvas();
+}
+
+function onOptsChange() {
+  const t = state.tool, f = $('#opts');
+  if (!f) return;
+  if (t.id === 'split') {
+    const custom = f.mode.value === 'ranges';
+    $('#f-ranges').hidden = !custom;
+  }
+  if (t.id === 'watermark') {
+    $('#v-wm-size').textContent = f.size.value;
+    $('#v-wm-op').textContent = f.opacity.value + '%';
+  }
+  if (t.id === 'compress') { /* nothing dynamic */ }
+  updateInfo();
+}
+
+function updateInfo() {
+  const t = state.tool, el = $('#info');
+  if (!el) return;
+  if (t.multi) {
+    const n = state.files.length;
+    el.textContent = n ? `${n} 個檔案${t.id === 'merge' ? '，拖曳卡片可調整合併順序' : '，拖曳卡片可調整頁序'}` : '';
+  } else {
+    const n = state.pages.length;
+    if (t.id === 'remove') el.textContent = `共 ${n} 頁，已選 ${state.pages.filter(p => p.sel).length} 頁要刪除`;
+    else if (t.id === 'extract') el.textContent = `共 ${n} 頁，已選 ${state.pages.filter(p => p.sel).length} 頁要保留`;
+    else if (t.id === 'organize') el.textContent = `共 ${n} 頁，拖曳可調整順序`;
+    else if (t.id === 'rotate') el.textContent = `共 ${n} 頁，點一下頁面即可旋轉`;
+    else el.textContent = `${state.file.name} ・ ${state.js.numPages} 頁 ・ ${fmtSize(state.file.size)}`;
+  }
+  const go = $('#go');
+  if (go) {
+    let disabled = false;
+    if (t.multi) disabled = t.id === 'merge' ? state.files.length < 2 : state.files.length < 1;
+    if (t.id === 'remove') disabled = !state.pages.some(p => p.sel) || state.pages.every(p => p.sel);
+    if (t.id === 'extract') disabled = !state.pages.some(p => p.sel);
+    if (t.id === 'organize') disabled = state.pages.length === 0;
+    go.disabled = disabled;
+    const msg = $('#msg');
+    if (msg) {
+      let m = '';
+      if (t.id === 'merge' && state.files.length === 1) m = '再加入至少一份 PDF 才能合併。';
+      if (t.id === 'remove' && state.pages.length && state.pages.every(p => p.sel)) m = '不能刪除全部頁面，至少保留一頁。';
+      msg.innerHTML = m ? `<p class="notice">${m}</p>` : '';
+    }
+  }
+}
+
+function optionsHtml(t) {
+  switch (t.id) {
+    case 'merge': return `<p class="field help" style="margin:0">檔案會由左到右、由上到下依序合併。拖曳卡片或使用箭頭調整順序。</p>`;
+    case 'split': return `
+      <div class="choices" role="radiogroup" aria-label="分割方式">
+        <label class="choice"><input type="radio" name="mode" value="ranges" checked><div><b>自訂範圍</b><span>每個範圍存成一份 PDF。</span></div></label>
+        <label class="choice"><input type="radio" name="mode" value="each"><div><b>每頁一份</b><span>每一頁都存成獨立的 PDF，打包成 ZIP。</span></div></label>
+      </div>
+      <div class="field" id="f-ranges">
+        <label for="ranges">頁碼範圍</label>
+        <input id="ranges" name="ranges" type="text" value="1-2, 3-" autocomplete="off">
+        <span class="help">用逗號分隔，例如 <span class="num">1-3, 5, 8-</span>（<span class="num">8-</span> 代表第 8 頁到最後）。</span>
+      </div>`;
+    case 'remove': return `<p class="field help" style="margin:0">點選要刪除的頁面，會標成紅色。再點一次可以取消。</p>
+      <button type="button" class="btn btn-ghost btn-sm" id="clearSel">清除選取</button>`;
+    case 'extract': return `<p class="field help" style="margin:0">點選要保留的頁面，會標成青色。輸出的檔案依原本頁序排列。</p>
+      <div class="field"><label for="pick-ranges">或直接輸入頁碼</label><input id="pick-ranges" type="text" placeholder="例如 1-3, 7" autocomplete="off"><button type="button" class="btn btn-secondary btn-sm" id="applyRanges">套用</button></div>`;
+    case 'organize': return `<p class="field help" style="margin:0">拖曳頁面調整順序，或用頁面下方的按鈕往前、往後移、旋轉與刪除。</p>
+      <button type="button" class="btn btn-ghost btn-sm" id="resetOrder">恢復原始順序</button>`;
+    case 'rotate': return `
+      <div class="field"><span class="label">全部頁面</span>
+        <div style="display:flex;gap:8px;flex-wrap:wrap">
+          <button type="button" class="btn btn-secondary btn-sm" data-rotall="-90">向左轉 90°</button>
+          <button type="button" class="btn btn-secondary btn-sm" data-rotall="90">向右轉 90°</button>
+        </div>
+      </div>
+      <p class="field help" style="margin:0">點一下單一頁面，會順時針轉 90°。</p>`;
+    case 'compress': return `
+      <div class="choices" role="radiogroup" aria-label="壓縮程度">
+        <label class="choice"><input type="radio" name="level" value="lossless"><div><b>無損整理</b><span>不動畫質，清掉多餘結構。文字可選取，縮小幅度有限。</span></div></label>
+        <label class="choice"><input type="radio" name="level" value="medium" checked><div><b>建議壓縮</b><span>每頁轉成 <span class="num">120 dpi</span> 影像，適合 Email 附件與掃描檔。</span></div></label>
+        <label class="choice"><input type="radio" name="level" value="strong"><div><b>強力壓縮</b><span><span class="num">80 dpi</span>，檔案最小，適合手機閱讀。</span></div></label>
+      </div>
+      <p class="field help" style="margin:0">建議與強力壓縮會把頁面轉成影像，文字將無法選取或搜尋。</p>`;
+    case 'img2pdf': return `
+      <div class="field"><span class="label">頁面大小</span>
+        <div class="seg"><label><input type="radio" name="size" value="a4" checked>A4</label><label><input type="radio" name="size" value="letter">Letter</label><label><input type="radio" name="size" value="fit">依圖片</label></div>
+      </div>
+      <div class="field"><span class="label">邊界</span>
+        <div class="seg"><label><input type="radio" name="margin" value="0">無</label><label><input type="radio" name="margin" value="20" checked>窄</label><label><input type="radio" name="margin" value="48">寬</label></div>
+      </div>
+      <p class="field help" style="margin:0">頁面方向會依每張圖片自動決定（直式或橫式）。</p>`;
+    case 'pdf2img': return `
+      <div class="field"><span class="label">圖片格式</span>
+        <div class="seg"><label><input type="radio" name="fmt" value="jpg" checked>JPG</label><label><input type="radio" name="fmt" value="png">PNG</label></div>
+      </div>
+      <div class="field"><span class="label">解析度</span>
+        <div class="seg"><label><input type="radio" name="dpi" value="96">螢幕 <span class="num">96</span></label><label><input type="radio" name="dpi" value="150" checked>標準 <span class="num">150</span></label><label><input type="radio" name="dpi" value="300">印刷 <span class="num">300</span></label></div>
+        <span class="help">單位為 dpi。多頁會打包成一個 ZIP 檔。</span>
+      </div>`;
+    case 'pdf2txt': return `<p class="field help" style="margin:0">適用於可選取文字的 PDF。掃描成圖片的檔案沒有文字層，需要先經過 OCR 文字辨識。</p>`;
+    case 'watermark': return `
+      <div class="field"><label for="wm-text">浮水印文字</label><input id="wm-text" name="text" type="text" value="內部文件 請勿外流" maxlength="40"></div>
+      <div class="field"><span class="label">版面</span>
+        <div class="seg"><label><input type="radio" name="layout" value="center" checked>置中一個</label><label><input type="radio" name="layout" value="tile">滿版重複</label></div>
+      </div>
+      <div class="field"><span class="label">角度</span>
+        <div class="seg"><label><input type="radio" name="angle" value="0">0°</label><label><input type="radio" name="angle" value="37" checked>37°</label><label><input type="radio" name="angle" value="45">45°</label><label><input type="radio" name="angle" value="90">90°</label></div>
+      </div>
+      <div class="field"><label for="wm-size">字級 <span class="num" id="v-wm-size">56</span> pt</label><input id="wm-size" name="size" type="range" min="16" max="120" value="56"></div>
+      <div class="field"><label for="wm-op">不透明度 <span class="num" id="v-wm-op">25%</span></label><input id="wm-op" name="opacity" type="range" min="5" max="100" value="25"></div>
+      <div class="field"><span class="label">顏色</span>
+        <div class="swatches">
+          <label style="background:#603E8D" title="效能紫"><input type="radio" name="color" value="#603E8D" checked><span class="sr">效能紫</span></label>
+          <label style="background:#2E2640" title="墨紫"><input type="radio" name="color" value="#2E2640"><span class="sr">墨紫</span></label>
+          <label style="background:#B3364A" title="警示紅"><input type="radio" name="color" value="#B3364A"><span class="sr">警示紅</span></label>
+          <label style="background:#8A8A8A" title="灰"><input type="radio" name="color" value="#8A8A8A"><span class="sr">灰</span></label>
+        </div>
+      </div>`;
+    case 'pagenum': return `
+      <div class="field"><span class="label">位置</span>
+        <div class="posgrid" role="radiogroup" aria-label="頁碼位置">
+          <label title="左上"><input type="radio" name="pos" value="tl"><span class="sr">左上</span></label>
+          <label title="上方置中"><input type="radio" name="pos" value="tc"><span class="sr">上方置中</span></label>
+          <label title="右上"><input type="radio" name="pos" value="tr"><span class="sr">右上</span></label>
+          <span class="gap"></span>
+          <label title="左下"><input type="radio" name="pos" value="bl"><span class="sr">左下</span></label>
+          <label title="下方置中"><input type="radio" name="pos" value="bc" checked><span class="sr">下方置中</span></label>
+          <label title="右下"><input type="radio" name="pos" value="br"><span class="sr">右下</span></label>
+        </div>
+      </div>
+      <div class="field"><label for="pn-fmt">格式</label>
+        <select id="pn-fmt" name="fmt">
+          <option value="n">1</option>
+          <option value="nN" selected>1 / 12</option>
+          <option value="zh">第 1 頁</option>
+          <option value="zhN">第 1 頁，共 12 頁</option>
+          <option value="dash">- 1 -</option>
+        </select>
+      </div>
+      <div class="field"><label for="pn-start">起始號碼</label><input id="pn-start" name="start" type="number" min="0" value="1"></div>
+      <div class="field"><label for="pn-size">字級（pt）</label><input id="pn-size" name="size" type="number" min="6" max="36" value="11"></div>
+      <label class="check"><input type="checkbox" name="skipFirst" id="pn-skip">封面不加頁碼</label>`;
+  }
+  return '';
+}
+
+/* ---------- canvas: file list or page grid ---------- */
+function renderCanvas() {
+  const t = state.tool, c = $('#canvas');
+  if (t.multi) {
+    c.innerHTML = `<div class="canvas-bar"><span class="info" id="info"></span><button type="button" class="btn btn-secondary btn-sm" id="addMore">${ICONS.plus.replace('<svg', '<svg width="16" height="16"')}加入檔案</button></div>
+      <ul class="files" id="files"></ul>`;
+    $('#addMore').addEventListener('click', () => pickFiles(true, onFiles));
+    renderFiles();
+  } else if (['remove', 'extract', 'organize', 'rotate'].includes(t.id)) {
+    c.innerHTML = `<div class="canvas-bar"><span class="info" id="info"></span></div><div class="pages" id="pages"></div>`;
+    renderPages();
+    bindPageOpts();
+  } else {
+    c.innerHTML = `<div class="canvas-bar"><span class="info" id="info"></span></div><div class="pages" id="pages"></div>`;
+    renderPages(true);
+  }
+  updateInfo();
+  // drop more files directly onto the workspace
+  c.addEventListener('dragover', e => { if (t.multi) e.preventDefault(); });
+  c.addEventListener('drop', e => { if (t.multi && e.dataTransfer.files.length) { e.preventDefault(); onFiles([...e.dataTransfer.files]); } });
+}
+
+function renderFiles() {
+  const ul = $('#files'), t = state.tool;
+  ul.innerHTML = state.files.map((f, i) => `
+    <li class="fcard" draggable="true" data-i="${i}">
+      <span class="order">${i + 1}</span>
+      <div class="thumb" data-thumb="${f.id}"></div>
+      <div class="name" title="${esc(f.file.name)}">${esc(f.file.name)}</div>
+      <div class="meta num">${f.err ? `<span style="color:var(--danger)">${esc(f.err)}</span>` : (f.pages ? f.pages + ' 頁 ・ ' : '') + fmtSize(f.file.size)}</div>
+      <div class="acts">
+        <button type="button" class="icon-btn" data-mv="-1" aria-label="往前移" ${i === 0 ? 'disabled' : ''}>${ICONS.up}</button>
+        <button type="button" class="icon-btn" data-mv="1" aria-label="往後移" ${i === state.files.length - 1 ? 'disabled' : ''}>${ICONS.down}</button>
+        <button type="button" class="icon-btn" data-del aria-label="移除">${ICONS.x}</button>
+      </div>
+    </li>`).join('') + `<li><button type="button" class="add-tile" id="addTile" style="width:100%">${ICONS.plus}加入${t.input === 'image' ? '圖片' : 'PDF'}</button></li>`;
+  state.files.forEach(f => { if (f.thumb) ul.querySelector(`[data-thumb="${f.id}"]`).appendChild(f.thumb); });
+  $('#addTile').addEventListener('click', () => pickFiles(true, onFiles));
+  $$('.fcard', ul).forEach(li => {
+    const i = +li.dataset.i;
+    li.querySelector('[data-mv="-1"]').addEventListener('click', () => moveFile(i, i - 1));
+    li.querySelector('[data-mv="1"]').addEventListener('click', () => moveFile(i, i + 1));
+    li.querySelector('[data-del]').addEventListener('click', () => { state.files.splice(i, 1); renderFiles(); updateInfo(); });
+  });
+  enableDragSort(ul, '.fcard', (from, to) => moveFile(from, to));
+  updateInfo();
+}
+function moveFile(from, to) {
+  if (to < 0 || to >= state.files.length || from === to) return;
+  const [f] = state.files.splice(from, 1); state.files.splice(to, 0, f); renderFiles();
+}
+
+async function loadFileThumbs() {
+  for (const f of state.files) {
+    if (f.thumb || f.err || f.loading) continue;
+    f.loading = true;
+    try {
+      if (state.tool.input === 'image') {
+        const img = new Image(); img.src = URL.createObjectURL(f.file); img.alt = '';
+        await img.decode(); f.thumb = img;
+      } else {
+        const bytes = await readBytes(f.file);
+        await loadPdf(bytes);
+        const js = await openJs(bytes);
+        f.pages = js.numPages;
+        f.thumb = await renderThumb(js, 1, 140);
+        js.destroy();
+      }
+    } catch (e) { f.err = e.message || '無法讀取'; }
+    const holder = document.querySelector(`[data-thumb="${f.id}"]`);
+    if (holder) renderFiles();
+  }
+}
+
+function enableDragSort(container, sel, onMove) {
+  let from = null;
+  $$(sel, container).forEach(el => {
+    el.addEventListener('dragstart', e => { from = +el.dataset.i; el.classList.add('dragging'); e.dataTransfer.effectAllowed = 'move'; try { e.dataTransfer.setData('text/plain', String(from)); } catch (_) {} });
+    el.addEventListener('dragend', () => { el.classList.remove('dragging'); $$('.drop-before', container).forEach(x => x.classList.remove('drop-before')); });
+    el.addEventListener('dragover', e => { if (from === null) return; e.preventDefault(); e.stopPropagation(); $$('.drop-before', container).forEach(x => x.classList.remove('drop-before')); el.classList.add('drop-before'); });
+    el.addEventListener('drop', e => {
+      if (from === null) return;
+      e.preventDefault(); e.stopPropagation();
+      let to = +el.dataset.i; if (from < to) to -= 1;
+      const f = from; from = null; onMove(f, to);
+    });
+  });
+}
+
+/* page grid */
+function renderPages(previewOnly = false) {
+  const t = state.tool, box = $('#pages');
+  const showCount = previewOnly ? Math.min(state.pages.length, 24) : state.pages.length;
+  box.innerHTML = state.pages.slice(0, showCount).map((p, k) => {
+    const cls = t.id === 'remove' && p.sel ? 'sel-remove' : t.id === 'extract' && p.sel ? 'sel-keep' : '';
+    const acts = t.id === 'organize' ? `<div class="acts">
+        <button type="button" class="icon-btn" data-a="left" aria-label="往前移">${ICONS.up}</button>
+        <button type="button" class="icon-btn" data-a="rot" aria-label="旋轉">${ICONS.rotR}</button>
+        <button type="button" class="icon-btn" data-a="del" aria-label="刪除此頁">${ICONS.x}</button>
+        <button type="button" class="icon-btn" data-a="right" aria-label="往後移">${ICONS.down}</button></div>` : '';
+    return `<div class="pcard ${cls}" data-i="${k}" ${t.id === 'organize' ? 'draggable="true"' : ''} ${previewOnly ? '' : 'tabindex="0" role="button"'} aria-label="第 ${p.i + 1} 頁">
+      <span class="badge">${t.id === 'remove' ? ICONS.cross : ICONS.check}</span>
+      <div class="thumb" data-pg="${p.i}"></div>
+      <span class="pn">${p.i + 1}</span>${acts}</div>`;
+  }).join('') + (showCount < state.pages.length ? `<div class="pcard" style="cursor:default;justify-content:center"><span class="pn">還有 ${state.pages.length - showCount} 頁</span></div>` : '');
+  $$('.pcard[data-i]', box).forEach(el => {
+    const k = +el.dataset.i, p = state.pages[k];
+    const holder = el.querySelector('.thumb');
+    if (p.canvas) { holder.appendChild(p.canvas); p.canvas.style.transform = `rotate(${p.rot}deg)`; }
+    else holder.innerHTML = '<div class="placeholder-page"></div>';
+    if (previewOnly) return;
+    const act = () => {
+      if (t.id === 'remove' || t.id === 'extract') { p.sel = !p.sel; el.className = 'pcard ' + (p.sel ? (t.id === 'remove' ? 'sel-remove' : 'sel-keep') : ''); updateInfo(); }
+      else if (t.id === 'rotate') { p.rot = (p.rot + 90) % 360; if (p.canvas) p.canvas.style.transform = `rotate(${p.rot}deg)`; }
+    };
+    el.addEventListener('click', e => { if (e.target.closest('.acts')) return; act(); });
+    el.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); act(); } });
+    if (t.id === 'organize') {
+      el.querySelector('[data-a="left"]').addEventListener('click', () => movePage(k, k - 1));
+      el.querySelector('[data-a="right"]').addEventListener('click', () => movePage(k, k + 1));
+      el.querySelector('[data-a="rot"]').addEventListener('click', () => { p.rot = (p.rot + 90) % 360; if (p.canvas) p.canvas.style.transform = `rotate(${p.rot}deg)`; });
+      el.querySelector('[data-a="del"]').addEventListener('click', () => {
+        if (state.pages.length === 1) { toast('至少要保留一頁'); return; }
+        state.pages.splice(k, 1); renderPages(); updateInfo();
+      });
+    }
+  });
+  if (t.id === 'organize') enableDragSort(box, '.pcard', movePage);
+}
+function movePage(from, to) {
+  if (to < 0 || to >= state.pages.length || from === to) return;
+  const [p] = state.pages.splice(from, 1); state.pages.splice(to, 0, p); renderPages();
+}
+function bindPageOpts() {
+  const t = state.tool;
+  if (t.id === 'remove') $('#clearSel').addEventListener('click', () => { state.pages.forEach(p => p.sel = false); renderPages(); updateInfo(); });
+  if (t.id === 'extract') $('#applyRanges').addEventListener('click', () => {
+    try {
+      const groups = parseRanges($('#pick-ranges').value, state.pages.length);
+      const set = new Set(groups.flatMap(g => g.idx));
+      state.pages.forEach(p => p.sel = set.has(p.i)); renderPages(); updateInfo();
+    } catch (e) { toast(e.message); }
+  });
+  if (t.id === 'organize') $('#resetOrder').addEventListener('click', () => {
+    state.pages = Array.from({ length: state.js.numPages }, (_, i) => {
+      const old = state.allPages ? state.allPages[i] : null;
+      return { i, rot: 0, sel: false, canvas: old ? old.canvas : null };
+    });
+    renderPages(); updateInfo();
+  });
+  if (t.id === 'rotate') $$('[data-rotall]').forEach(b => b.addEventListener('click', () => {
+    const d = +b.dataset.rotall;
+    state.pages.forEach(p => { p.rot = (p.rot + d + 360) % 360; if (p.canvas) p.canvas.style.transform = `rotate(${p.rot}deg)`; });
+  }));
+}
+async function loadPageThumbs() {
+  state.allPages = state.pages.slice();
+  const js = state.js;
+  const limit = ['remove', 'extract', 'organize', 'rotate'].includes(state.tool.id) ? state.pages.length : Math.min(state.pages.length, 24);
+  for (let k = 0; k < limit; k++) {
+    const p = state.allPages[k];
+    if (state.js !== js) return; // user switched files
+    try { p.canvas = await renderThumb(js, p.i + 1, 120); } catch (_) { continue; }
+    const holder = document.querySelector(`.thumb[data-pg="${p.i}"]`);
+    if (holder) { holder.innerHTML = ''; holder.appendChild(p.canvas); p.canvas.style.transform = `rotate(${p.rot}deg)`; }
+    if (k % 4 === 3) await tick();
+  }
+}
+
+/* ================= processing ================= */
+async function run() {
+  const t = state.tool;
+  const f = $('#opts');
+  const opts = Object.fromEntries(new FormData(f).entries());
+  overlay.show(t.name);
+  try {
+    const out = await PROCESS[t.id](opts);
+    overlay.set(1, '完成');
+    await tick();
+    overlay.hide();
+    state.result = out;
+    renderResult(out);
+  } catch (e) {
+    overlay.hide();
+    const msg = $('#msg');
+    if (msg) msg.innerHTML = `<p class="notice error">${esc(e.message || '處理失敗，請再試一次。')}</p>`;
+    console.error(e);
+  }
+}
+
+async function copyPagesTo(out, src, specs) {
+  // specs: [{i, rot}] — copies pages in this order and applies extra rotation
+  const copied = await out.copyPages(src, specs.map(s => s.i));
+  copied.forEach((pg, k) => {
+    const extra = specs[k].rot || 0;
+    if (extra) pg.setRotation(degrees((pg.getRotation().angle + extra) % 360));
+    out.addPage(pg);
+  });
+}
+
+const PROCESS = {
+  async merge() {
+    const out = await PDFDocument.create();
+    const n = state.files.length;
+    for (let k = 0; k < n; k++) {
+      const f = state.files[k];
+      overlay.set(k / n, `合併第 ${k + 1} / ${n} 個檔案：${f.file.name}`);
+      const src = await loadPdf(await readBytes(f.file)).catch(e => { throw new Error(`${f.file.name}：${e.message}`); });
+      await copyPagesTo(out, src, src.getPageIndices().map(i => ({ i })));
+    }
+    const bytes = await out.save();
+    return { kind: 'file', name: 'merged.pdf', blob: pdfBlob(bytes), title: '合併完成', detail: `${n} 個檔案，共 ${out.getPageCount()} 頁` };
+  },
+
+  async split(o) {
+    const src = await loadPdf(state.bytes);
+    const total = src.getPageCount();
+    const groups = o.mode === 'each'
+      ? Array.from({ length: total }, (_, i) => ({ label: String(i + 1), idx: [i] }))
+      : parseRanges(o.ranges || '', total);
+    const base = baseName(state.file.name);
+    const parts = [];
+    for (let k = 0; k < groups.length; k++) {
+      overlay.set(k / groups.length, `產生第 ${k + 1} / ${groups.length} 份`);
+      const out = await PDFDocument.create();
+      await copyPagesTo(out, src, groups[k].idx.map(i => ({ i })));
+      parts.push({ name: `${base}_p${groups[k].label}.pdf`, bytes: await out.save() });
+    }
+    if (parts.length === 1) return { kind: 'file', name: parts[0].name, blob: pdfBlob(parts[0].bytes), title: '分割完成', detail: `第 ${groups[0].label} 頁` };
+    const zip = new JSZip(); parts.forEach(p => zip.file(p.name, p.bytes));
+    const blob = await zip.generateAsync({ type: 'blob' }, m => overlay.set(.9 + m.percent / 1000, '打包 ZIP…'));
+    return { kind: 'file', name: `${base}_split.zip`, blob, title: '分割完成', detail: `拆成 ${parts.length} 份 PDF，已打包成 ZIP` };
+  },
+
+  async remove() {
+    const src = await loadPdf(state.bytes);
+    const keep = state.pages.filter(p => !p.sel);
+    const out = await PDFDocument.create();
+    await copyPagesTo(out, src, keep.map(p => ({ i: p.i })));
+    return { kind: 'file', name: baseName(state.file.name) + '_edited.pdf', blob: pdfBlob(await out.save()), title: '頁面已刪除', detail: `刪除 ${state.pages.length - keep.length} 頁，剩下 ${keep.length} 頁` };
+  },
+
+  async extract() {
+    const src = await loadPdf(state.bytes);
+    const keep = state.pages.filter(p => p.sel);
+    const out = await PDFDocument.create();
+    await copyPagesTo(out, src, keep.map(p => ({ i: p.i })));
+    return { kind: 'file', name: baseName(state.file.name) + '_extract.pdf', blob: pdfBlob(await out.save()), title: '擷取完成', detail: `擷取 ${keep.length} 頁` };
+  },
+
+  async organize() {
+    const src = await loadPdf(state.bytes);
+    const out = await PDFDocument.create();
+    await copyPagesTo(out, src, state.pages.map(p => ({ i: p.i, rot: p.rot })));
+    return { kind: 'file', name: baseName(state.file.name) + '_organized.pdf', blob: pdfBlob(await out.save()), title: '頁面已整理', detail: `共 ${state.pages.length} 頁` };
+  },
+
+  async rotate() {
+    const src = await loadPdf(state.bytes);
+    const out = await PDFDocument.create();
+    await copyPagesTo(out, src, state.pages.map(p => ({ i: p.i, rot: p.rot })));
+    const n = state.pages.filter(p => p.rot).length;
+    return { kind: 'file', name: baseName(state.file.name) + '_rotated.pdf', blob: pdfBlob(await out.save()), title: '旋轉完成', detail: n ? `旋轉了 ${n} 頁` : '沒有頁面被旋轉，檔案內容與原本相同' };
+  },
+
+  async compress(o) {
+    const before = state.file.size;
+    let bytes;
+    if (o.level === 'lossless') {
+      overlay.set(.3, '重新整理檔案結構…');
+      const src = await loadPdf(state.bytes);
+      bytes = await src.save({ useObjectStreams: true });
+    } else {
+      const dpi = o.level === 'strong' ? 80 : 120, q = o.level === 'strong' ? .5 : .68;
+      const js = state.js, n = js.numPages;
+      const out = await PDFDocument.create();
+      const c = document.createElement('canvas'), ctx = c.getContext('2d');
+      for (let i = 1; i <= n; i++) {
+        overlay.set((i - 1) / n, `壓縮第 ${i} / ${n} 頁`);
+        const page = await js.getPage(i);
+        const vp1 = page.getViewport({ scale: 1 }); // already includes /Rotate
+        const vp = page.getViewport({ scale: dpi / 72 });
+        c.width = Math.ceil(vp.width); c.height = Math.ceil(vp.height);
+        ctx.fillStyle = '#fff'; ctx.fillRect(0, 0, c.width, c.height);
+        await page.render({ canvasContext: ctx, viewport: vp }).promise;
+        const blob = await new Promise(r => c.toBlob(r, 'image/jpeg', q));
+        const img = await out.embedJpg(new Uint8Array(await blob.arrayBuffer()));
+        const pg = out.addPage([vp1.width, vp1.height]);
+        pg.drawImage(img, { x: 0, y: 0, width: vp1.width, height: vp1.height });
+        page.cleanup();
+      }
+      bytes = await out.save({ useObjectStreams: true });
+    }
+    const after = bytes.length;
+    if (after >= before) {
+      return { kind: 'file', name: baseName(state.file.name) + '_compressed.pdf', blob: pdfBlob(state.bytes), title: '這份檔案已經很精簡', detail: `壓縮後沒有變小，提供原檔下載。可以試試${o.level === 'strong' ? '其他程度' : '「強力壓縮」'}。`, before, after: before };
+    }
+    return { kind: 'file', name: baseName(state.file.name) + '_compressed.pdf', blob: pdfBlob(bytes), title: '壓縮完成', before, after };
+  },
+
+  async img2pdf(o) {
+    const out = await PDFDocument.create();
+    const n = state.files.length, margin = +o.margin;
+    const sizes = { a4: [595.28, 841.89], letter: [612, 792] };
+    for (let k = 0; k < n; k++) {
+      const f = state.files[k];
+      overlay.set(k / n, `加入第 ${k + 1} / ${n} 張圖片`);
+      let bmp;
+      try { bmp = await createImageBitmap(f.file, { imageOrientation: 'from-image' }); }
+      catch (_) { throw new Error(`${f.file.name}：無法讀取這張圖片。`); }
+      const maxPx = 3000, s = Math.min(1, maxPx / Math.max(bmp.width, bmp.height));
+      const c = document.createElement('canvas'); c.width = Math.round(bmp.width * s); c.height = Math.round(bmp.height * s);
+      const ctx = c.getContext('2d');
+      const isPng = f.file.type === 'image/png';
+      if (!isPng) { ctx.fillStyle = '#fff'; ctx.fillRect(0, 0, c.width, c.height); }
+      ctx.drawImage(bmp, 0, 0, c.width, c.height);
+      const blob = await new Promise(r => c.toBlob(r, isPng ? 'image/png' : 'image/jpeg', .9));
+      const data = new Uint8Array(await blob.arrayBuffer());
+      const img = isPng ? await out.embedPng(data) : await out.embedJpg(data);
+      let pw, ph;
+      const landscape = c.width > c.height;
+      if (o.size === 'fit') { const bw = bmp.width * .75, bh = bmp.height * .75, kk = Math.min(1, 1200 / Math.max(bw, bh)); pw = bw * kk + margin * 2; ph = bh * kk + margin * 2; }
+      else { [pw, ph] = sizes[o.size]; if (landscape) [pw, ph] = [ph, pw]; }
+      const aw = pw - margin * 2, ah = ph - margin * 2;
+      const r = Math.min(aw / c.width, ah / c.height);
+      const w = c.width * r, h = c.height * r;
+      const pg = out.addPage([pw, ph]);
+      pg.drawImage(img, { x: (pw - w) / 2, y: (ph - h) / 2, width: w, height: h });
+      bmp.close && bmp.close();
+    }
+    const name = n === 1 ? baseName(state.files[0].file.name) + '.pdf' : 'images.pdf';
+    return { kind: 'file', name, blob: pdfBlob(await out.save()), title: '轉換完成', detail: `${n} 張圖片，共 ${n} 頁` };
+  },
+
+  async pdf2img(o) {
+    const js = state.js, n = js.numPages, dpi = +o.dpi, isJpg = o.fmt === 'jpg';
+    const base = baseName(state.file.name);
+    const c = document.createElement('canvas'), ctx = c.getContext('2d');
+    const imgs = [];
+    for (let i = 1; i <= n; i++) {
+      overlay.set((i - 1) / n, `轉換第 ${i} / ${n} 頁`);
+      const page = await js.getPage(i);
+      const vp = page.getViewport({ scale: dpi / 72 });
+      c.width = Math.ceil(vp.width); c.height = Math.ceil(vp.height);
+      ctx.fillStyle = '#fff'; ctx.fillRect(0, 0, c.width, c.height);
+      await page.render({ canvasContext: ctx, viewport: vp }).promise;
+      imgs.push({ name: `${base}_${String(i).padStart(String(n).length, '0')}.${o.fmt}`, blob: await new Promise(r => c.toBlob(r, isJpg ? 'image/jpeg' : 'image/png', .9)) });
+      page.cleanup();
+    }
+    if (n === 1) return { kind: 'file', name: imgs[0].name, blob: imgs[0].blob, title: '轉換完成', detail: `1 張 ${o.fmt.toUpperCase()}，${dpi} dpi` };
+    const zip = new JSZip(); imgs.forEach(im => zip.file(im.name, im.blob));
+    const blob = await zip.generateAsync({ type: 'blob' }, m => overlay.set(.9 + m.percent / 1000, '打包 ZIP…'));
+    return { kind: 'file', name: `${base}_images.zip`, blob, title: '轉換完成', detail: `${n} 張 ${o.fmt.toUpperCase()}，${dpi} dpi，已打包成 ZIP` };
+  },
+
+  async pdf2txt() {
+    const js = state.js, n = js.numPages;
+    let text = '', chars = 0;
+    for (let i = 1; i <= n; i++) {
+      overlay.set((i - 1) / n, `讀取第 ${i} / ${n} 頁`);
+      const page = await js.getPage(i);
+      const tc = await page.getTextContent();
+      let s = '';
+      for (const it of tc.items) { if ('str' in it) { s += it.str; if (it.hasEOL) s += '\n'; } }
+      s = s.replace(/[ \t]+\n/g, '\n').trim();
+      chars += s.replace(/\s/g, '').length;
+      text += (n > 1 ? `── 第 ${i} 頁 ──\n` : '') + s + '\n\n';
+    }
+    if (!chars) throw new Error('這份 PDF 裡找不到文字，可能是掃描成圖片的檔案，需要 OCR 才能辨識。');
+    return { kind: 'text', name: baseName(state.file.name) + '.txt', blob: new Blob(['﻿' + text.trim()], { type: 'text/plain' }), text: text.trim(), title: '文字擷取完成', detail: `${n} 頁，約 ${chars.toLocaleString()} 字` };
+  },
+
+  async watermark(o) {
+    const text = (o.text || '').trim();
+    if (!text) throw new Error('請輸入浮水印文字。');
+    const src = await loadPdf(state.bytes);
+    const im = await textImage(text, { size: +o.size, color: o.color, opacity: +o.opacity / 100, angle: +o.angle });
+    const img = await src.embedPng(im.bytes);
+    const pages = src.getPages();
+    pages.forEach((pg, k) => {
+      overlay.set(k / pages.length, `處理第 ${k + 1} / ${pages.length} 頁`);
+      const { width: W, height: H } = pg.getSize();
+      const { x: ox, y: oy } = pg.getMediaBox();
+      if (o.layout === 'tile') {
+        const sx = im.w + 60, sy = im.h + 60;
+        for (let y = oy - im.h / 2; y < oy + H; y += sy)
+          for (let x = ox - im.w / 2 + ((Math.round((y - oy) / sy) % 2) ? sx / 2 : 0); x < ox + W; x += sx)
+            pg.drawImage(img, { x, y, width: im.w, height: im.h });
+      } else {
+        const r = Math.min(1, (W * .9) / im.w, (H * .9) / im.h);
+        pg.drawImage(img, { x: ox + (W - im.w * r) / 2, y: oy + (H - im.h * r) / 2, width: im.w * r, height: im.h * r });
+      }
+    });
+    return { kind: 'file', name: baseName(state.file.name) + '_watermark.pdf', blob: pdfBlob(await src.save()), title: '浮水印已加入', detail: `${pages.length} 頁都已加上「${text}」` };
+  },
+
+  async pagenum(o) {
+    const src = await loadPdf(state.bytes);
+    const pages = src.getPages();
+    const start = parseInt(o.start, 10) || 0, size = Math.min(36, Math.max(6, +o.size || 11));
+    const skip = !!o.skipFirst;
+    const total = pages.length - (skip ? 1 : 0) + start - 1;
+    const fmt = (i) => ({ n: `${i}`, nN: `${i} / ${total}`, zh: `第 ${i} 頁`, zhN: `第 ${i} 頁，共 ${total} 頁`, dash: `- ${i} -` }[o.fmt]);
+    const margin = 28;
+    for (let k = 0; k < pages.length; k++) {
+      if (skip && k === 0) continue;
+      overlay.set(k / pages.length, `處理第 ${k + 1} / ${pages.length} 頁`);
+      const num = start + k - (skip ? 1 : 0);
+      const im = await textImage(fmt(num), { size, color: '#2E2640', weight: 500 });
+      const img = await src.embedPng(im.bytes);
+      const pg = pages[k];
+      const { width: W, height: H } = pg.getSize();
+      const { x: ox, y: oy } = pg.getMediaBox();
+      const col = o.pos[1], row = o.pos[0];
+      const x = col === 'l' ? margin : col === 'r' ? W - margin - im.w : (W - im.w) / 2;
+      const y = row === 'b' ? margin - im.h / 2 : H - margin - im.h / 2;
+      pg.drawImage(img, { x: ox + x, y: oy + y, width: im.w, height: im.h });
+    }
+    return { kind: 'file', name: baseName(state.file.name) + '_numbered.pdf', blob: pdfBlob(await src.save()), title: '頁碼已加入', detail: `從 ${start} 開始編號${skip ? '，封面不編號' : ''}` };
+  },
+};
+
+/* ================= result ================= */
+function renderResult(r) {
+  const t = state.tool;
+  const stats = r.before ? `<div class="stats num"><span>原始 <b>${fmtSize(r.before)}</b></span><span>→</span><span>壓縮後 <b>${fmtSize(r.after)}</b></span>${r.after < r.before ? `<span class="saving">省下 ${Math.round((1 - r.after / r.before) * 100)}%</span>` : ''}</div>` : '';
+  const next = (NEXT[t.id] || []).map(id => byId[id]).filter(Boolean);
+  $('#stage').innerHTML = `
+    <div class="result">
+      <svg class="ok" viewBox="0 0 120 120" aria-hidden="true">
+        <path d="M73.6 17.7 A44 44 0 1 0 102 46" fill="none" stroke="#603E8D" stroke-width="6" stroke-linecap="round"/>
+        <path d="M38 62 C37 72 44 77 52 76.5 C64 75.5 74 65 83 51 C72 61 60 68.5 50 69 C44 69.3 40 66.5 38 62 Z" fill="#36C2B4"/>
+        <use href="#spark" x="88" y="10" width="20" height="20"/>
+      </svg>
+      <h2>${esc(r.title)}</h2>
+      ${r.detail ? `<p style="color:var(--muted)">${esc(r.detail)}</p>` : ''}
+      ${stats}
+      ${r.kind === 'text' ? `<textarea class="textprev" id="txt" readonly aria-label="擷取的文字">${esc(r.text)}</textarea>` : ''}
+      <div class="row">
+        <button class="btn btn-primary" id="save" type="button">下載 ${esc(r.name)}</button>
+        ${r.kind === 'text' ? `<button class="btn btn-secondary" id="copy" type="button">複製文字</button>` : ''}
+      </div>
+      <div class="row">
+        <button class="btn btn-ghost" id="again" type="button">再處理一份</button>
+      </div>
+      ${next.length ? `<div class="next"><h3>下一步可以</h3><div class="grid">${next.map(n => `<a class="tool-card" href="#${n.id}"><div class="ico">${ICONS[n.id]}</div><h3>${n.name}</h3></a>`).join('')}</div></div>` : ''}
+    </div>`;
+  $('#save').addEventListener('click', () => saveFile(r.name, r.blob));
+  $('#again').addEventListener('click', () => { resetState(t); renderDrop(); window.scrollTo(0, 0); });
+  if (r.kind === 'text') $('#copy').addEventListener('click', () => {
+    const ta = $('#txt');
+    navigator.clipboard.writeText(r.text).then(() => toast('已複製'), () => { ta.focus(); ta.select(); toast('請按 Ctrl+C（或 ⌘C）複製選取的文字'); });
+  });
+}
+
+/* ================= boot ================= */
+if (!window.PDFLib || !window.pdfjsLib || !window.JSZip) {
+  app.innerHTML = `<div class="wrap" style="padding-block:48px"><p class="notice error">處理 PDF 的元件沒有載入成功，請確認網路連線後重新整理頁面。</p></div>`;
+} else {
+  route();
+  getDownloads();
+}
+})();
+</script>
+
+</body>
+</html>
