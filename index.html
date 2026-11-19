@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<meta name="description" content="秉軒老師的 PDF 工具箱：合併、分割、壓縮、旋轉、轉檔、浮水印與頁碼，檔案只在你的瀏覽器裡處理。">
+<meta name="description" content="秉軒老師的 PDF 工具箱：合併、分割、壓縮、OCR、Office 與 PDF 互轉、簽名、加密、遮蔽、比較與 AI 摘要翻譯，大多數工具只在你的瀏覽器裡處理檔案。">
 <link rel="icon" href="favicon.svg" type="image/svg+xml">
 </head>
 <body>
@@ -236,7 +236,7 @@ a { color: var(--purple); }
 .field { display: flex; flex-direction: column; gap: 8px; }
 .field > label, .field > .label { font-weight: 600; font-size: 14px; color: var(--ink); }
 .field .help { font-size: 13px; color: var(--muted); line-height: 1.55; }
-.field input[type="text"], .field input[type="number"], .field select, .field textarea {
+.field input[type="text"], .field input[type="number"], .field input[type="password"], .field select, .field textarea {
   font: inherit; font-size: 15px; color: var(--ink); background: var(--white);
   border: 1.5px solid var(--line); border-radius: var(--radius-sm); padding: 9px 12px; width: 100%;
 }
@@ -338,6 +338,93 @@ a { color: var(--purple); }
 .next .tool-card .ico svg { width: 22px; height: 22px; }
 .next .tool-card h3 { font-size: 15px; }
 
+/* camera */
+.cam-card { background: var(--ink); border-radius: 22px; padding: 12px; width: min(760px, 100%); display: flex; flex-direction: column; gap: 12px; }
+.cam-card video { width: 100%; max-height: 70vh; border-radius: 14px; background: #000; transition: opacity .12s; object-fit: contain; }
+.cam-bar { display: flex; gap: 10px; align-items: center; justify-content: flex-end; color: var(--white); font-size: 14px; }
+.cam-bar span { margin-right: auto; }
+
+/* page editor */
+.ed-bar { display: flex; flex-wrap: wrap; align-items: center; gap: 4px; padding: 6px; border: 1.5px solid var(--line); border-radius: 14px; margin-bottom: 12px; background: var(--white); position: sticky; top: calc(env(safe-area-inset-top, 0px) + 76px); z-index: 5; }
+.ed-tool { display: inline-flex; align-items: center; gap: 6px; border: 0; background: transparent; padding: 7px 10px; border-radius: 10px; cursor: pointer; font-size: 14px; color: var(--ink); }
+.ed-tool svg { width: 18px; height: 18px; }
+.ed-tool:hover { background: var(--mist); }
+.ed-tool[aria-pressed="true"] { background: var(--purple); color: var(--white); }
+.ed-tool[aria-pressed="true"] svg { stroke: var(--white); }
+.ed-tool:disabled { opacity: .4; cursor: default; background: transparent; }
+.ed-sep { width: 1px; align-self: stretch; background: var(--line); margin: 2px 4px; }
+.ed-colors { display: flex; gap: 6px; padding: 0 4px; }
+.ed-colors label { width: 22px; height: 22px; border-radius: 50%; cursor: pointer; box-shadow: 0 0 0 1.5px var(--line); position: relative; }
+.ed-colors input { position: absolute; opacity: 0; }
+.ed-colors label:has(input:checked) { box-shadow: 0 0 0 2.5px var(--purple); }
+.ed-size { font-size: 14px; display: inline-flex; gap: 6px; align-items: center; }
+.ed-size select, .ed-pg select { font: inherit; font-size: 14px; border: 1.5px solid var(--line); border-radius: 8px; padding: 3px 6px; background: var(--white); color: var(--ink); }
+.ed-pg { display: inline-flex; gap: 6px; align-items: center; font-size: 14px; color: var(--muted); }
+.ed-wrap { background: var(--mist); border-radius: var(--radius); padding: 16px; overflow: auto; min-height: 320px; display: flex; justify-content: center; align-items: flex-start; }
+.ed-page { position: relative; box-shadow: 0 4px 18px -8px rgba(46, 38, 64, .45); background: #fff; flex-shrink: 0; }
+.ed-page canvas { display: block; }
+.ed-layer { position: absolute; inset: 0; overflow: hidden; touch-action: none; cursor: default; }
+.ed-layer[data-tool="text"] { cursor: text; }
+.ed-layer[data-tool="rect"], .ed-layer[data-tool="hl"], .ed-layer[data-tool="redact"], .ed-layer[data-tool="draw"], .ed-layer[data-tool="sig"] { cursor: crosshair; }
+.ed-item { position: absolute; cursor: move; touch-action: none; }
+.ed-item.sel { outline: 1.5px dashed var(--purple); outline-offset: 2px; }
+.ed-item img { width: 100%; height: 100%; display: block; pointer-events: none; user-select: none; }
+.ed-txt { white-space: pre-wrap; min-width: 1em; font-family: "Noto Sans TC", "Nunito", "PingFang TC", "Microsoft JhengHei", sans-serif; outline: none; width: max-content; max-width: 100%; }
+.ed-text { width: auto !important; min-width: 20px; }
+.ed-txt[contenteditable="true"] { cursor: text; background: rgba(255, 255, 255, .6); }
+.ed-h { position: absolute; width: 14px; height: 14px; border-radius: 50%; background: var(--white); border: 2px solid var(--purple); }
+.ed-h[data-h="se"] { right: -8px; bottom: -8px; cursor: nwse-resize; }
+.ed-h[data-h="nw"] { left: -8px; top: -8px; cursor: nwse-resize; }
+.ed-h[data-h="ne"] { right: -8px; top: -8px; cursor: nesw-resize; }
+.ed-h[data-h="sw"] { left: -8px; bottom: -8px; cursor: nesw-resize; }
+.ed-x { position: absolute; right: -12px; top: -14px; width: 24px; height: 24px; border-radius: 50%; border: 0; background: var(--danger); color: #fff; font-size: 16px; line-height: 1; cursor: pointer; display: grid; place-items: center; }
+.ed-crop { outline: 2px solid var(--purple) !important; box-shadow: 0 0 0 9999px rgba(46, 38, 64, .45); }
+.ed-live { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; }
+.sig-choice { align-items: center; }
+.sig-choice img { max-height: 44px; max-width: 170px; }
+.sig-choice .icon-btn { margin-left: auto; }
+.sig-card { background: var(--white); border-radius: 22px; padding: 24px; width: min(600px, 100%); display: flex; flex-direction: column; gap: 14px; max-height: calc(100vh - 32px); overflow: auto; }
+.sig-card h2 { font-size: 20px; }
+.sig-pad { width: 100%; aspect-ratio: 1040/360; border: 2px dashed var(--purple-20); border-radius: 14px; touch-action: none; cursor: crosshair; background: #fff; }
+.sig-row { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+.sig-row .help { font-size: 13px; color: var(--muted); margin-right: auto; }
+.sig-card input[type="text"] { font: inherit; font-size: 16px; border: 1.5px solid var(--line); border-radius: 10px; padding: 9px 12px; width: 100%; }
+.sig-fonts { display: flex; flex-direction: column; gap: 6px; margin-top: 10px; }
+.sig-fonts .choice { align-items: center; }
+.sig-prev img { max-width: 100%; max-height: 120px; margin-top: 10px; }
+
+/* forms */
+.form-list { display: flex; flex-direction: column; gap: 14px; max-width: 640px; }
+.form-page { font-size: 15px; color: var(--muted); margin-top: 8px; }
+.form-field input[type="text"], .form-field textarea, .form-field select { font: inherit; font-size: 15px; color: var(--ink); border: 1.5px solid var(--line); border-radius: var(--radius-sm); padding: 9px 12px; width: 100%; background: var(--white); }
+
+/* markdown preview + compare */
+.mdprev { width: 100%; text-align: left; border: 1.5px solid var(--line); border-radius: var(--radius); padding: 18px 22px; max-height: 520px; overflow: auto; background: var(--white); }
+.mdprev h2, .mdprev h3, .mdprev h4 { margin: 14px 0 6px; }
+.mdprev h2 { font-size: 20px; } .mdprev h3 { font-size: 17px; } .mdprev h4 { font-size: 15px; }
+.mdprev p, .mdprev li { font-size: 15px; margin: 0 0 6px; }
+.mdprev table { border-collapse: collapse; margin: 8px 0; font-size: 14px; }
+.mdprev td, .mdprev th { border: 1px solid var(--line); padding: 4px 8px; }
+.result.wide { max-width: 1100px; }
+.cmp { width: 100%; text-align: left; display: flex; flex-direction: column; gap: 12px; }
+.cmp h3 { font-size: 17px; margin-top: 8px; }
+.cmp-stats { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; }
+.df { border: 1.5px solid var(--line); border-radius: var(--radius); overflow: auto; max-height: 560px; font-size: 14px; line-height: 1.6; }
+.df-row { display: grid; grid-template-columns: 1fr 1fr; }
+.df-row > div { padding: 4px 10px; border-bottom: 1px solid var(--line); min-width: 0; overflow-wrap: anywhere; }
+.df-row > div:first-child { border-right: 1px solid var(--line); }
+.df-head > div { background: var(--mist); font-weight: 700; color: var(--purple); position: sticky; top: 0; }
+.df-del > div:first-child, .df-mod > div:first-child { background: var(--danger-bg); }
+.df-add > div:last-child, .df-mod > div:last-child { background: #E9F8F6; }
+.df del { background: #F6C6CE; text-decoration: line-through; }
+.df ins { background: #B6EBE4; text-decoration: none; }
+.df .pg { font-size: 11px; color: var(--muted); margin-right: 6px; font-family: var(--font-latin); }
+.df-gap { text-align: center; color: var(--muted); font-size: 12px; background: #FAF8FD; border-bottom: 1px solid var(--line); }
+.cmp-vis { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 14px; }
+.cmp-vis figure { margin: 0; border: 1.5px solid var(--line); border-radius: 12px; padding: 8px; background: var(--white); }
+.cmp-vis figcaption { font-size: 13px; color: var(--muted); margin-top: 6px; text-align: center; }
+@media (max-width: 640px) { .df-row { grid-template-columns: 1fr; } .df-row > div:first-child { border-right: 0; } }
+
 .notice { border-radius: 12px; padding: 12px 14px; font-size: 14px; line-height: 1.6; background: var(--mist); color: var(--ink); }
 .notice.error { background: var(--danger-bg); color: var(--danger); }
 .toast { position: fixed; left: 50%; bottom: calc(24px + env(safe-area-inset-bottom, 0px)); transform: translateX(-50%); background: var(--ink); color: var(--white); padding: 10px 18px; border-radius: 999px; font-size: 14px; z-index: 60; max-width: calc(100% - 32px); }
@@ -394,7 +481,7 @@ a { color: var(--purple); }
 <footer class="site-footer">
   <div class="wrap">
     <div class="slogan"><b>是你，讓 AI 更強大</b><span>You Make AI Stronger.</span></div>
-    <small>AI效能實驗室－秉軒老師 ｜ 所有檔案都在你的瀏覽器內處理，不會上傳到任何伺服器。</small>
+    <small>AI效能實驗室－秉軒老師 ｜ 除了標示 AI 的工具，所有檔案都在你的瀏覽器內處理，不會上傳到任何伺服器。</small>
   </div>
 </footer>
 
@@ -436,11 +523,40 @@ const ICONS = {
   pdf2txt: svg(`<path d="${doc}"/><path d="M9 11h6M9 14h6M9 17h4" stroke="${T}"/>`),
   watermark: svg(`<path d="${doc}"/><path d="M8.5 17.5l7-6.5" stroke="${T}" stroke-width="2.2"/>`),
   pagenum: svg(`<path d="${doc}"/><path d="M10.5 14.5l1.5-1v5M10.5 18.5h3" stroke="${T}"/>`),
-  pdf2word: svg(`<path d="${doc}"/><path d="M8.5 11l1.2 6 2.3-4.5 2.3 4.5 1.2-6"/>`),
-  office2pdf: svg(`<rect x="3" y="5" width="11" height="14" rx="1.5"/><path d="M6 9h5M6 12h5M6 15h3"/><path d="M15 9h6v10h-6"/>`),
-  protect: svg(`<rect x="5" y="10" width="14" height="11" rx="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/><path d="M12 14v3"/>`),
-  sign: svg(`<path d="M3 19c3-1 4-6 6-6s0 5 3 5 3-4 5-4"/><path d="M14 4l4 4-8 8H6v-4z"/>`),
-  ocr: svg(`<path d="M3 8V4h4M17 4h4v4M21 16v4h-4M7 20H3v-4"/><path d="M8 10h8M8 14h5"/>`),
+  pdf2word: svg(`<path d="${doc}"/><path d="M8.5 11l1.2 6 2.3-4.5 2.3 4.5 1.2-6" stroke="${T}"/>`),
+  pdf2ppt: svg(`<path d="${doc}"/><rect x="8" y="11" width="8" height="6" rx="1" stroke="${T}"/><path d="M12 17v2.5" stroke="${T}"/>`),
+  pdf2excel: svg(`<path d="${doc}"/><path d="M8.5 11h7v7h-7zM8.5 14.5h7M12 11v7" stroke="${T}"/>`),
+  pdf2pdfa: svg(`<path d="${doc}"/><path d="M9 18l3-7 3 7M10.2 15.5h3.6" stroke="${T}"/>`),
+  pdf2md: svg(`<path d="${doc}"/><path d="M8 18v-6l2 2.5 2-2.5v6M14.5 12v5.5M13 16l1.5 1.5L16 16" stroke="${T}"/>`),
+  word2pdf: svg(`<rect x="3" y="4" width="11" height="15" rx="1.5"/><path d="M5.5 8.5l1 5 1.5-3.5 1.5 3.5 1-5"/><path d="M13 11h8v10h-8z" stroke="${T}"/>`),
+  ppt2pdf: svg(`<rect x="3" y="4" width="12" height="9" rx="1.5"/><path d="M9 13v3"/><path d="M13 11h8v10h-8z" stroke="${T}"/>`),
+  excel2pdf: svg(`<rect x="3" y="4" width="11" height="12" rx="1.5"/><path d="M3 8h11M3 12h11M8 4v12"/><path d="M13 11h8v10h-8z" stroke="${T}"/>`),
+  html2pdf: svg(`<circle cx="9" cy="10" r="6"/><path d="M3 10h12M9 4c-2 2-2 10 0 12M9 4c2 2 2 10 0 12"/><path d="M13 12h8v9h-8z" stroke="${T}"/>`),
+  scan: svg(`<path d="M3 8V4h4M17 4h4v4M21 16v4h-4M7 20H3v-4"/><path d="M8 7h8v10H8z" stroke="${T}"/>`),
+  repair: svg(`<path d="${doc}"/><path d="M14.5 11.5a2.5 2.5 0 0 1-3.3 3.3L9 17l-1-1 2.2-2.2a2.5 2.5 0 0 1 3.3-3.3l-1.5 1.5.8.8z" stroke="${T}"/>`),
+  ocr: svg(`<path d="M3 8V4h4M17 4h4v4M21 16v4h-4M7 20H3v-4"/><path d="M8 10h8M8 14h5" stroke="${T}"/>`),
+  crop: svg(`<path d="M6 2v16h16"/><path d="M2 6h16v16" stroke="${T}"/>`),
+  editpdf: svg(`<path d="${doc}"/><path d="M16.5 10.5l2 2-6 6H10.5v-2z" stroke="${T}"/>`),
+  forms: svg(`<rect x="4" y="3" width="16" height="18" rx="2"/><path d="M7.5 8h9M7.5 12.5h3" /><rect x="12" y="11" width="5" height="3" rx="1" stroke="${T}"/><path d="M7.5 17h9"/>`),
+  unlock: svg(`<rect x="5" y="10" width="14" height="11" rx="2"/><path d="M8 10V7a4 4 0 0 1 7.5-2"/><path d="M12 14v3" stroke="${T}"/>`),
+  protect: svg(`<rect x="5" y="10" width="14" height="11" rx="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/><path d="M12 14v3" stroke="${T}"/>`),
+  sign: svg(`<path d="M3 19c3-1 4-6 6-6s0 5 3 5 3-4 5-4" stroke="${T}"/><path d="M14 4l4 4-8 8H6v-4z"/>`),
+  redact: svg(`<path d="${doc}"/><path d="M8.5 11h7v2.5h-7zM8.5 15.5h4.5v2.5H8.5z" fill="${T}" stroke="${T}"/>`),
+  compare: svg(`<rect x="3" y="4" width="8" height="16" rx="1.5"/><rect x="13" y="4" width="8" height="16" rx="1.5"/><path d="M5.5 9h3M15.5 9h3M15.5 13h3" stroke="${T}"/>`),
+  summary: svg(`<path d="${doc}"/><path d="M9 12h6M9 15h6M9 18h3" stroke="${T}"/><path d="M19 1.5l.7 1.8 1.8.7-1.8.7-.7 1.8-.7-1.8-1.8-.7 1.8-.7z" fill="#FFC94A" stroke="none"/>`),
+  translate: svg(`<path d="M3 5h9M7.5 3v2M5 5c.5 3 2.5 5.5 6 7M10 5c-.5 3-2.5 5.5-6 7"/><path d="M12 21l4-9 4 9M13.5 18h5" stroke="${T}"/>`),
+  camera: svg(`<path d="M4 8h3l2-2.5h6L17 8h3v11H4z"/><circle cx="12" cy="13" r="3.5"/>`),
+  text: svg(`<path d="M5 6V4h14v2M12 4v16M9 20h6"/>`),
+  image: svg(`<rect x="3" y="4" width="18" height="16" rx="2"/><path d="M3 16l5-5 4 4 3-3 6 6"/><circle cx="15.5" cy="8.5" r="1.5"/>`),
+  rect: svg(`<rect x="4" y="6" width="16" height="12" rx="1"/>`),
+  pen: svg(`<path d="M4 20c2-6 5-11 9-13M16 3l5 5-9 9-5 1 1-5z"/>`),
+  hl: svg(`<path d="M4 20h7M14 4l6 6-8 8H6v-6z"/>`),
+  pointer: svg(`<path d="M6 3l12 8-5.5 1.5L15 19l-2.5 1.5-2.5-6.5L6 17z"/>`),
+  trash: svg(`<path d="M5 7h14M10 7V4h4v3M7 7l1 13h8l1-13"/>`),
+  search: svg(`<circle cx="10.5" cy="10.5" r="6"/><path d="M15 15l5 5"/>`),
+  zoomin: svg(`<circle cx="10.5" cy="10.5" r="6"/><path d="M15 15l5 5M8 10.5h5M10.5 8v5"/>`),
+  zoomout: svg(`<circle cx="10.5" cy="10.5" r="6"/><path d="M15 15l5 5M8 10.5h5"/>`),
+  calendar: svg(`<rect x="4" y="5" width="16" height="15" rx="2"/><path d="M4 10h16M8 3v4M16 3v4"/>`),
   upload: svg(`<path d="M12 16V4M7 9l5-5 5 5"/><path d="M4 15v4a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-4"/>`),
   up: svg(`<path d="M15 6l-6 6 6 6"/>`),
   down: svg(`<path d="M9 6l6 6-6 6"/>`),
@@ -458,29 +574,62 @@ const ICONS = {
 
 /* ================= tool catalog ================= */
 const GROUPS = [
-  { id: 'organize', name: '整理頁面', note: '合併、拆分、調整頁序' },
-  { id: 'convert', name: '壓縮與轉換', note: '寄信前先瘦身，PDF 與圖片、文字互轉' },
-  { id: 'edit', name: '編輯內容', note: '加上浮水印與頁碼' },
+  { id: 'organize', name: '整理 PDF', note: '合併、拆分、調整頁序，手機拍照也能變 PDF' },
+  { id: 'optimize', name: '優化 PDF', note: '瘦身、修復壞檔、讓掃描檔可以搜尋' },
+  { id: 'topdf', name: '轉成 PDF', note: '照片、Word、簡報、試算表、網頁都能轉' },
+  { id: 'frompdf', name: '從 PDF 轉出', note: '轉回可編輯的 Office 檔、圖片或長期保存格式' },
+  { id: 'edit', name: '編輯 PDF', note: '旋轉、裁切、加字加圖、頁碼浮水印、填表單' },
+  { id: 'security', name: '安全與簽署', note: '加密、解鎖、簽名、遮蔽機密、比對版本' },
+  { id: 'ai', name: 'AI 智慧工具', note: '摘要、翻譯、轉 Markdown 給 AI 讀' },
 ];
+// input: 'pdf' | 'image' | 'file' (with accept/match). view: how the workspace shows the loaded file.
 const TOOLS = [
   { id: 'merge', group: 'organize', name: '合併 PDF', desc: '把多份 PDF 依你排好的順序，合成一份檔案。', input: 'pdf', multi: true, cta: '合併 PDF' },
   { id: 'split', group: 'organize', name: '分割 PDF', desc: '依頁碼範圍拆成幾份，或每一頁各存一份。', input: 'pdf', cta: '分割 PDF' },
-  { id: 'remove', group: 'organize', name: '刪除頁面', desc: '點選不要的頁面，一次移除後另存新檔。', input: 'pdf', cta: '刪除選取頁面' },
-  { id: 'extract', group: 'organize', name: '擷取頁面', desc: '只挑出需要的幾頁，存成一份新的 PDF。', input: 'pdf', cta: '擷取頁面' },
-  { id: 'organize', group: 'organize', name: '整理頁面', desc: '拖曳調整頁序，順手旋轉或刪掉單頁。', input: 'pdf', cta: '套用並下載' },
-  { id: 'rotate', group: 'organize', name: '旋轉 PDF', desc: '整份或單頁轉 90°，掃描歪掉的頁面一次轉正。', input: 'pdf', cta: '旋轉 PDF' },
-  { id: 'compress', group: 'convert', name: '壓縮 PDF', desc: '降低檔案大小，Email 附件不再超過上限。', input: 'pdf', cta: '壓縮 PDF' },
-  { id: 'img2pdf', group: 'convert', name: '圖片轉 PDF', desc: 'JPG、PNG 照片排好順序，合成一份 PDF。', input: 'image', multi: true, cta: '轉成 PDF' },
-  { id: 'pdf2img', group: 'convert', name: 'PDF 轉圖片', desc: '每一頁轉成 JPG 或 PNG，方便放進簡報或社群。', input: 'pdf', cta: '轉成圖片' },
-  { id: 'pdf2txt', group: 'convert', name: 'PDF 轉文字', desc: '抽出 PDF 裡的文字，存成可編輯的 .txt。', input: 'pdf', cta: '擷取文字' },
-  { id: 'watermark', group: 'edit', name: '加入浮水印', desc: '每一頁蓋上文字浮水印，中文也能用。', input: 'pdf', cta: '加入浮水印' },
+  { id: 'remove', group: 'organize', name: '刪除頁面', desc: '點選不要的頁面，一次移除後另存新檔。', input: 'pdf', cta: '刪除選取頁面', view: 'pages' },
+  { id: 'extract', group: 'organize', name: '擷取頁面', desc: '只挑出需要的幾頁，存成一份新的 PDF。', input: 'pdf', cta: '擷取頁面', view: 'pages' },
+  { id: 'organize', group: 'organize', name: '整理頁面', desc: '拖曳調整頁序，順手旋轉或刪掉單頁。', input: 'pdf', cta: '套用並下載', view: 'pages' },
+  { id: 'scan', group: 'organize', name: '掃描成 PDF', desc: '用手機或電腦鏡頭拍文件，自動調成清楚的掃描檔。', input: 'image', multi: true, cta: '產生 PDF', camera: true },
+  { id: 'compress', group: 'optimize', name: '壓縮 PDF', desc: '降低檔案大小，Email 附件不再超過上限。', input: 'pdf', cta: '壓縮 PDF' },
+  { id: 'repair', group: 'optimize', name: '修復 PDF', desc: '打不開或顯示錯誤的 PDF，重建結構救回內容。', input: 'pdf', raw: true, cta: '修復 PDF' },
+  { id: 'ocr', group: 'optimize', name: 'OCR 文字辨識', desc: '辨識掃描檔裡的中英文，變成可搜尋、可複製的 PDF。', input: 'pdf', cta: '開始辨識' },
+  { id: 'img2pdf', group: 'topdf', name: '圖片轉 PDF', desc: 'JPG、PNG 照片排好順序，合成一份 PDF。', input: 'image', multi: true, cta: '轉成 PDF' },
+  { id: 'word2pdf', group: 'topdf', name: 'Word 轉 PDF', desc: '把 .docx 文件轉成 PDF，方便寄送與列印。', input: 'file', accept: '.docx,application/vnd.openxmlformats-officedocument.wordprocessingml.document', match: /\.docx$/i, kind: 'Word 檔（.docx）', cta: '轉成 PDF' },
+  { id: 'ppt2pdf', group: 'topdf', name: 'PowerPoint 轉 PDF', desc: '把 .pptx 簡報每一張投影片轉成 PDF 頁面。', input: 'file', accept: '.pptx,application/vnd.openxmlformats-officedocument.presentationml.presentation', match: /\.pptx$/i, kind: '簡報檔（.pptx）', cta: '轉成 PDF' },
+  { id: 'excel2pdf', group: 'topdf', name: 'Excel 轉 PDF', desc: '把試算表的每個工作表轉成整齊的 PDF 表格。', input: 'file', accept: '.xlsx,.xls,.csv,.ods', match: /\.(xlsx|xls|csv|ods)$/i, kind: '試算表（.xlsx、.xls、.csv）', cta: '轉成 PDF' },
+  { id: 'html2pdf', group: 'topdf', name: 'HTML 轉 PDF', desc: '網頁檔或貼上的 HTML 原始碼，轉成 PDF。', input: 'file', accept: '.html,.htm,text/html', match: /\.html?$/i, kind: '網頁檔（.html）', cta: '轉成 PDF', paste: true },
+  { id: 'pdf2img', group: 'frompdf', name: 'PDF 轉圖片', desc: '每一頁轉成 JPG 或 PNG，方便放進簡報或社群。', input: 'pdf', cta: '轉成圖片' },
+  { id: 'pdf2word', group: 'frompdf', name: 'PDF 轉 Word', desc: '轉成可以編輯的 .docx，文字段落直接改。', input: 'pdf', cta: '轉成 Word' },
+  { id: 'pdf2ppt', group: 'frompdf', name: 'PDF 轉 PowerPoint', desc: '每一頁變成一張投影片，簡報直接接著用。', input: 'pdf', cta: '轉成 PowerPoint' },
+  { id: 'pdf2excel', group: 'frompdf', name: 'PDF 轉 Excel', desc: '把 PDF 裡的表格與數字抓進 .xlsx 試算表。', input: 'pdf', cta: '轉成 Excel' },
+  { id: 'pdf2pdfa', group: 'frompdf', name: 'PDF 轉 PDF/A', desc: '轉成長期保存用的 PDF/A，公文歸檔、送件更安心。', input: 'pdf', cta: '轉成 PDF/A' },
+  { id: 'pdf2txt', group: 'frompdf', name: 'PDF 轉文字', desc: '抽出 PDF 裡的文字，存成可編輯的 .txt。', input: 'pdf', cta: '擷取文字' },
+  { id: 'rotate', group: 'edit', name: '旋轉 PDF', desc: '整份或單頁轉 90°，掃描歪掉的頁面一次轉正。', input: 'pdf', cta: '旋轉 PDF', view: 'pages' },
   { id: 'pagenum', group: 'edit', name: '加入頁碼', desc: '選好位置與格式，自動為每一頁編號。', input: 'pdf', cta: '加入頁碼' },
+  { id: 'watermark', group: 'edit', name: '加入浮水印', desc: '每一頁蓋上文字浮水印，中文也能用。', input: 'pdf', cta: '加入浮水印' },
+  { id: 'crop', group: 'edit', name: '裁切 PDF', desc: '框出要保留的範圍，切掉多餘白邊。', input: 'pdf', cta: '裁切 PDF', view: 'editor' },
+  { id: 'editpdf', group: 'edit', name: '編輯 PDF', desc: '在頁面上加文字、圖片、方框、螢光筆與手繪。', input: 'pdf', cta: '儲存變更', view: 'editor' },
+  { id: 'forms', group: 'edit', name: '填寫 PDF 表單', desc: '直接填好 PDF 裡的欄位、勾選框與下拉選單。', input: 'pdf', cta: '儲存表單', view: 'forms' },
+  { id: 'unlock', group: 'security', name: '解除 PDF 密碼', desc: '移除開啟密碼與列印、複製限制（需知道密碼）。', input: 'pdf', raw: true, cta: '解除密碼' },
+  { id: 'protect', group: 'security', name: 'PDF 加密', desc: '設定開啟密碼，並可限制列印、複製與修改。', input: 'pdf', cta: '加密 PDF' },
+  { id: 'sign', group: 'security', name: 'PDF 簽名', desc: '手寫、打字或上傳簽名，放到文件上的任何位置。', input: 'pdf', cta: '完成簽署', view: 'editor' },
+  { id: 'redact', group: 'security', name: '遮蔽機密', desc: '把個資、金額等內容永久塗黑，無法再被複製還原。', input: 'pdf', cta: '套用遮蔽', view: 'editor' },
+  { id: 'compare', group: 'security', name: '比較 PDF', desc: '比對兩個版本，標出文字與畫面上的差異。', input: 'pdf', multi: true, max: 2, cta: '開始比較' },
+  { id: 'summary', group: 'ai', name: 'AI 摘要', desc: '幾十頁的報告，濃縮成幾段重點。', input: 'pdf', cta: '產生摘要', ai: true },
+  { id: 'translate', group: 'ai', name: 'AI 翻譯 PDF', desc: '翻成中文、英文、日文，盡量保留原本版面。', input: 'pdf', cta: '開始翻譯', ai: true },
+  { id: 'pdf2md', group: 'ai', name: 'PDF 轉 Markdown', desc: '轉成標題、清單分明的 Markdown，丟給 AI 更好讀。', input: 'pdf', cta: '轉成 Markdown' },
 ];
 const NEXT = {
   merge: ['compress', 'pagenum', 'organize'], split: ['merge', 'compress'], remove: ['compress', 'pagenum'],
   extract: ['merge', 'compress'], organize: ['pagenum', 'compress'], rotate: ['compress', 'merge'],
-  compress: ['merge', 'split'], img2pdf: ['compress', 'merge'], pdf2img: ['img2pdf', 'compress'],
-  pdf2txt: ['pdf2img', 'split'], watermark: ['compress', 'pagenum'], pagenum: ['compress', 'watermark'],
+  compress: ['merge', 'protect'], img2pdf: ['compress', 'ocr'], pdf2img: ['img2pdf', 'compress'],
+  pdf2txt: ['summary', 'pdf2md'], watermark: ['compress', 'protect'], pagenum: ['compress', 'watermark'],
+  scan: ['ocr', 'compress'], repair: ['compress', 'pdf2pdfa'], ocr: ['pdf2word', 'summary'],
+  word2pdf: ['merge', 'protect'], ppt2pdf: ['compress', 'merge'], excel2pdf: ['merge', 'compress'], html2pdf: ['merge', 'compress'],
+  pdf2word: ['word2pdf', 'translate'], pdf2ppt: ['ppt2pdf'], pdf2excel: ['excel2pdf'], pdf2pdfa: ['protect', 'compress'],
+  crop: ['compress', 'pagenum'], editpdf: ['sign', 'compress'], forms: ['sign', 'protect'],
+  unlock: ['editpdf', 'compress'], protect: ['compress'], sign: ['protect', 'compress'], redact: ['protect', 'compress'],
+  compare: ['merge'], summary: ['translate', 'pdf2md'], translate: ['summary', 'compress'], pdf2md: ['summary', 'translate'],
 };
 const SITE = 'https://ai-efficiency-lab-site.vercel.app/';
 const ASKS = [
@@ -505,7 +654,7 @@ const esc = s => String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;'
 const fmtSize = b => b < 1024 ? b + ' B' : b < 1048576 ? (b / 1024).toFixed(1) + ' KB' : (b / 1048576).toFixed(2) + ' MB';
 const baseName = n => n.replace(/\.[^.]+$/, '');
 const tick = () => new Promise(r => setTimeout(r, 0));
-const { PDFDocument, degrees } = window.PDFLib || {};
+const { PDFDocument, degrees, rgb, PDFName, PDFHexString, PDFString, PDFDict, PDFArray, PDFNumber } = window.PDFLib || {};
 
 if (window.pdfjsLib) pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
 
@@ -550,12 +699,219 @@ async function readBytes(file) { return new Uint8Array(await file.arrayBuffer())
 async function loadPdf(bytes) {
   try { return await PDFDocument.load(bytes, { updateMetadata: false }); }
   catch (e) {
-    if (/encrypt/i.test(String(e && e.message))) throw new Error('這份 PDF 有密碼保護，請先移除密碼後再上傳。');
+    if (/encrypt/i.test(String(e && e.message))) throw new Error('這份 PDF 有密碼保護，請先用「解除 PDF 密碼」移除密碼後再上傳。');
     throw new Error('無法讀取這份 PDF，檔案可能已損毀。');
   }
 }
 async function openJs(bytes) { return pdfjsLib.getDocument({ data: bytes.slice(0) }).promise; }
 const pdfBlob = bytes => new Blob([bytes], { type: 'application/pdf' });
+
+// Heavier libraries load only when a tool needs them (exact versions, jsDelivr mirrors npm).
+const CDN = 'https://cdn.jsdelivr.net/npm/';
+const LIBS = {
+  tesseract: CDN + 'tesseract.js@5.1.1/dist/tesseract.min.js',
+  qpdf: CDN + '@neslinesli93/qpdf-wasm@0.3.1/dist/qpdf.js',
+  qpdfWasm: CDN + '@neslinesli93/qpdf-wasm@0.3.1/dist/qpdf.wasm',
+  mammoth: CDN + 'mammoth@1.8.0/mammoth.browser.min.js',
+  xlsx: CDN + 'xlsx@0.18.5/dist/xlsx.full.min.js',
+  html2canvas: CDN + 'html2canvas@1.4.1/dist/html2canvas.min.js',
+  pptx: CDN + 'pptxgenjs@3.12.0/dist/pptxgen.bundle.js',
+};
+const scriptCache = {};
+function loadScript(key, test) {
+  if (test && test()) return Promise.resolve();
+  if (!scriptCache[key]) {
+    scriptCache[key] = new Promise((resolve, reject) => {
+      const el = document.createElement('script');
+      el.src = LIBS[key]; el.async = true; el.crossOrigin = 'anonymous';
+      el.onload = () => resolve();
+      el.onerror = () => { delete scriptCache[key]; el.remove(); reject(new Error('需要的元件下載失敗，請確認網路連線後再試一次。')); };
+      document.head.appendChild(el);
+    });
+  }
+  return scriptCache[key];
+}
+
+// qpdf (WebAssembly): encryption, decryption and structural repair. A fresh instance per run keeps its FS clean.
+let qpdfFactory = null;
+async function runQpdf(input, args) {
+  if (!qpdfFactory) {
+    await loadScript('qpdf');
+    qpdfFactory = window.Module; try { delete window.Module; } catch (_) { window.Module = undefined; }
+    if (typeof qpdfFactory !== 'function') throw new Error('PDF 引擎載入失敗，請重新整理頁面再試一次。');
+  }
+  const log = [];
+  // this qpdf build binds console.log/error when the module is created, so capture them around the run
+  const orig = { log: console.log, error: console.error };
+  console.log = (...a) => log.push(a.join(' ')); console.error = (...a) => log.push(a.join(' '));
+  let code, q;
+  try {
+    q = await qpdfFactory({ locateFile: () => LIBS.qpdfWasm, noInitialRun: true });
+    q.FS.writeFile('/in.pdf', input);
+    try { code = q.callMain([...args.map(a => a === '@in' ? '/in.pdf' : a === '@out' ? '/out.pdf' : a)]); }
+    catch (e) { code = e && typeof e.status === 'number' ? e.status : 2; }
+  } finally { console.log = orig.log; console.error = orig.error; }
+  let out = null;
+  try { out = q.FS.readFile('/out.pdf'); } catch (_) {}
+  // qpdf exit codes: 0 ok, 3 ok with warnings, 2 error
+  return { code, out: (code === 0 || code === 3) ? out : null, log: log.join('\n') };
+}
+
+function canvasBlob(c, type = 'image/png', q) { return new Promise(r => c.toBlob(r, type, q)); }
+async function canvasBytes(c, type = 'image/png', q) { return new Uint8Array(await (await canvasBlob(c, type, q)).arrayBuffer()); }
+async function renderPageCanvas(js, pageNo, dpi, bg = '#fff', rotation) {
+  const page = await js.getPage(pageNo);
+  const vp = page.getViewport({ scale: dpi / 72, ...(rotation != null ? { rotation } : {}) });
+  const c = document.createElement('canvas');
+  c.width = Math.ceil(vp.width); c.height = Math.ceil(vp.height);
+  const ctx = c.getContext('2d');
+  if (bg) { ctx.fillStyle = bg; ctx.fillRect(0, 0, c.width, c.height); }
+  await page.render({ canvasContext: ctx, viewport: vp }).promise;
+  const vp1 = page.getViewport({ scale: 1, ...(rotation != null ? { rotation } : {}) });
+  page.cleanup();
+  return { canvas: c, vp1, vp };
+}
+
+// Draw an embedded image/page so it appears upright inside a rectangle given in pdf.js viewport
+// coordinates (scale 1, top-left origin, page rotation applied). Works for /Rotate 0/90/180/270.
+function placeOnPage(pg, obj, rect, vp1, kind = 'image', opacity) {
+  const [ax, ay] = vp1.convertToPdfPoint(rect.x, rect.y + rect.h);
+  const opts = { x: ax, y: ay, width: rect.w, height: rect.h, rotate: degrees(((vp1.rotation % 360) + 360) % 360) };
+  if (opacity != null) opts.opacity = opacity;
+  if (kind === 'page') pg.drawPage(obj, { x: opts.x, y: opts.y, width: opts.width, height: opts.height, rotate: opts.rotate });
+  else pg.drawImage(obj, opts);
+}
+
+// Text layout from pdf.js: items → lines (with font size and position, viewport units).
+async function pageLines(js, pageNo) {
+  const page = await js.getPage(pageNo);
+  const tc = await page.getTextContent();
+  // Normally read text as displayed; if most of it runs vertically (e.g. a page whose /Rotate turns
+  // upright text sideways), read it in the orientation where it is horizontal instead.
+  let vp, items;
+  for (const rot of [page.rotate, 0, 90, 180, 270]) {
+    vp = page.getViewport({ scale: 1, rotation: rot });
+    items = collectItems(tc, vp);
+    const vert = items.filter(i => i.vertical).length;
+    if (vert <= items.length / 2) break;
+  }
+  page.cleanup();
+  return groupLines(items, vp);
+}
+function collectItems(tc, vp) {
+  const items = [];
+  for (const it of tc.items) {
+    if (!('str' in it) || !it.str) continue;
+    const m = pdfjsLib.Util.transform(vp.transform, it.transform);
+    const size = Math.hypot(m[2], m[3]) || Math.abs(it.height) || 10;
+    const vertical = Math.abs(m[1]) > Math.abs(m[0]) + .01;
+    const w = (it.width || 0) * vp.scale;
+    const fam = tc.styles && tc.styles[it.fontName] ? tc.styles[it.fontName].fontFamily : '';
+    const upsideDown = m[0] < 0 && Math.abs(m[1]) < .01;
+    items.push({ str: it.str, x: m[4], y: m[5] - size, w: vertical ? size : w, h: vertical ? (it.width || size) : size, size, vertical: vertical || upsideDown, font: it.fontName || '', fam });
+  }
+  return items;
+}
+function groupLines(items, vp) {
+  // group horizontal items into lines by baseline
+  // whitespace runs only carry spacing, which the gap logic below already handles
+  const hz = items.filter(i => !i.vertical && i.str.trim() !== '').sort((a, b) => a.y - b.y || a.x - b.x);
+  const lines = [];
+  for (const it of hz) {
+    const ln = lines.find(l => Math.abs(l.y + l.h / 2 - (it.y + it.h / 2)) < Math.max(2, Math.min(l.h, it.h) * .45));
+    if (ln) ln.items.push(it); else lines.push({ y: it.y, h: it.h, items: [it] });
+    if (ln) { const top = Math.min(ln.y, it.y), bot = Math.max(ln.y + ln.h, it.y + it.h); ln.y = top; ln.h = bot - top; }
+  }
+  for (const l of lines) {
+    l.items.sort((a, b) => a.x - b.x);
+    let text = '', last = null;
+    for (const it of l.items) {
+      if (last) {
+        const gap = it.x - (last.x + last.w);
+        const cjk = /[　-鿿＀-￯]$/.test(text) || /^[　-鿿＀-￯]/.test(it.str);
+        if (gap > it.size * .25 && !cjk && !/\s$/.test(text) && !/^\s/.test(it.str)) text += ' ';
+        else if (gap > it.size * 1.5 && !/\s$/.test(text)) text += ' ';
+      }
+      text += it.str; last = it;
+    }
+    l.text = text.replace(/\s+/g, ' ').trim();
+    l.x = l.items[0].x;
+    l.w = Math.max(...l.items.map(i => i.x + i.w)) - l.x;
+    l.size = l.items.reduce((m, i) => Math.max(m, i.size), 0);
+    l.bold = l.items.some(i => /bold|black|heavy|semibold|w[6-9]/i.test(i.fam + ' ' + i.font));
+  }
+  return { lines: lines.filter(l => l.text), items, width: vp.width, height: vp.height, vp };
+}
+
+// Lines → paragraphs/blocks (used by Word, Markdown and layout-keeping translation).
+function linesToBlocks(lines, bodySize) {
+  const blocks = [];
+  let cur = null;
+  for (const l of lines) {
+    const gap = cur ? l.y - (cur.y + cur.h) : 0;
+    const sameStyle = cur && Math.abs(l.size - cur.size) < Math.max(1, cur.size * .12);
+    const bullet = /^([•●○▪■◆\-–*]|\d+[.)、]|[a-zA-Z][.)]|[（(]?[一二三四五六七八九十]+[)）、])\s*/.test(l.text);
+    if (cur && sameStyle && gap < l.h * .9 && gap > -l.h * .5 && !bullet && Math.abs(l.x - cur.x) < l.size * 4) {
+      const cjk = /[　-鿿＀-￯]$/.test(cur.text);
+      cur.text = cur.text.replace(/-$/, '') + (cjk || /-$/.test(cur.text) ? '' : ' ') + l.text;
+      cur.h = l.y + l.h - cur.y; cur.w = Math.max(cur.x + cur.w, l.x + l.w) - Math.min(cur.x, l.x); cur.x = Math.min(cur.x, l.x);
+      cur.lines.push(l);
+    } else {
+      cur = { text: l.text, x: l.x, y: l.y, w: l.w, h: l.h, size: l.size, bold: l.bold, bullet, lines: [l] };
+      blocks.push(cur);
+    }
+  }
+  for (const b of blocks) {
+    const r = b.size / (bodySize || b.size);
+    b.level = r >= 1.8 ? 1 : r >= 1.4 ? 2 : (r >= 1.15 || (b.bold && b.text.length < 60 && b.lines.length === 1)) ? 3 : 0;
+    if (b.text.length > 160) b.level = 0;
+  }
+  return blocks;
+}
+function medianSize(allLines) {
+  const arr = [];
+  allLines.forEach(l => { for (let k = 0; k < Math.min(l.text.length, 200); k++) arr.push(l.size); });
+  arr.sort((a, b) => a - b);
+  return arr.length ? arr[Math.floor(arr.length / 2)] : 11;
+}
+
+async function extractAllText(js, onPage) {
+  const pages = [];
+  for (let i = 1; i <= js.numPages; i++) {
+    onPage && onPage(i);
+    const { lines } = await pageLines(js, i);
+    pages.push(lines.map(l => l.text).join('\n'));
+  }
+  return pages;
+}
+
+// Multi-line text → transparent PNG (CJK-safe), wrapping to a box width in points.
+async function textBoxImage(text, { size = 14, color = '#2E2640', width = null, weight = 400, align = 'left', family = '"Noto Sans TC", "Nunito", "PingFang TC", "Microsoft JhengHei", sans-serif', lineHeight = 1.3, k = 4 }) {
+  const font = `${weight} ${size * k}px ${family}`;
+  try { await document.fonts.load(font, text); } catch (_) {}
+  const m = document.createElement('canvas').getContext('2d'); m.font = font;
+  const out = [];
+  for (const para of String(text).split('\n')) {
+    if (!width) { out.push(para); continue; }
+    let line = '';
+    for (const ch of para.match(/[　-鿿＀-￯]|[^\s　-鿿＀-￯]+|\s+/g) || ['']) {
+      const test = line + ch;
+      if (m.measureText(test).width > width * k && line.trim()) { out.push(line.trimEnd()); line = ch.trimStart(); }
+      else line = test;
+    }
+    out.push(line);
+  }
+  const W = Math.ceil(width ? width * k : Math.max(1, ...out.map(l => m.measureText(l).width)) + 2 * k);
+  const lh = size * k * lineHeight;
+  const H = Math.ceil(lh * out.length + size * k * .2);
+  const c = document.createElement('canvas'); c.width = Math.max(1, W); c.height = Math.max(1, H);
+  const ctx = c.getContext('2d'); ctx.font = font; ctx.fillStyle = color; ctx.textBaseline = 'alphabetic';
+  ctx.textAlign = align; const ax = align === 'center' ? W / 2 : align === 'right' ? W : 0;
+  out.forEach((l, i) => ctx.fillText(l, ax, lh * i + size * k * 1.0));
+  return { bytes: await canvasBytes(c), w: W / k, h: H / k, lines: out.length };
+}
+
+const isPdfFile = f => f.type === 'application/pdf' || /\.pdf$/i.test(f.name);
 
 async function renderThumb(pdf, pageNo, maxW = 160) {
   const page = await pdf.getPage(pageNo);
@@ -627,7 +983,7 @@ document.addEventListener('click', e => {
 
 /* ================= home ================= */
 function toolCard(t) {
-  return `<a class="tool-card" href="#${t.id}"><div class="ico">${ICONS[t.id]}</div><h3>${t.name}</h3><p>${t.desc}</p></a>`;
+  return `<a class="tool-card" href="#${t.id}">${t.ai ? '<span class="pill">AI</span>' : ''}<div class="ico">${ICONS[t.id]}</div><h3>${t.name}</h3><p>${t.desc}</p></a>`;
 }
 function renderHome() {
   document.title = '秉軒老師的 PDF 工具箱';
@@ -645,7 +1001,7 @@ function renderHome() {
         <div class="hero-facts">
           <span>${ICONS.lock}檔案只在你的瀏覽器裡處理</span>
           <span>${ICONS.free}免註冊、免安裝</span>
-          <span>${ICONS.bolt}12 種工具，支援中文</span>
+          <span>${ICONS.bolt}${TOOLS.length} 種工具，支援中文</span>
         </div>
       </div>
       <ol class="flow" aria-label="三個步驟">
@@ -695,10 +1051,11 @@ function renderTool() {
   renderDrop();
 }
 
-function acceptAttr(t) { return t.input === 'image' ? 'image/jpeg,image/png,image/webp,image/gif,image/bmp' : 'application/pdf,.pdf'; }
-function pickFiles(multi, cb) {
+function acceptAttr(t) { return t.input === 'image' ? 'image/jpeg,image/png,image/webp,image/gif,image/bmp' : t.input === 'file' ? t.accept : 'application/pdf,.pdf'; }
+function pickFiles(multi, cb, capture) {
   const inp = document.createElement('input');
   inp.type = 'file'; inp.accept = acceptAttr(state.tool); inp.multiple = !!multi;
+  if (capture) inp.setAttribute('capture', 'environment');
   inp.hidden = true;
   inp.addEventListener('change', () => { cb([...inp.files]); inp.remove(); });
   document.body.appendChild(inp);
@@ -706,15 +1063,19 @@ function pickFiles(multi, cb) {
 }
 function filterFiles(list) {
   const t = state.tool;
-  const ok = list.filter(f => t.input === 'image' ? /^image\//.test(f.type) : (f.type === 'application/pdf' || /\.pdf$/i.test(f.name)));
-  if (ok.length < list.length) toast(t.input === 'image' ? '只接受 JPG、PNG、WebP、GIF 圖片，其他檔案已略過' : '只接受 PDF 檔，其他檔案已略過');
-  return t.multi ? ok : ok.slice(0, 1);
+  const ok = list.filter(f => t.input === 'image' ? /^image\//.test(f.type) : t.input === 'file' ? t.match.test(f.name) : isPdfFile(f));
+  if (ok.length < list.length) toast(t.input === 'image' ? '只接受 JPG、PNG、WebP、GIF 圖片，其他檔案已略過' : t.input === 'file' ? `只接受${t.kind}，其他檔案已略過` : '只接受 PDF 檔，其他檔案已略過');
+  if (!t.multi) return ok.slice(0, 1);
+  if (t.max) return ok.slice(0, Math.max(0, t.max - state.files.length));
+  return ok;
 }
 
 function renderDrop() {
   const t = state.tool;
   const stage = $('#stage');
-  const what = t.input === 'image' ? '圖片' : 'PDF';
+  const what = t.input === 'image' ? '圖片' : t.input === 'file' ? t.kind.replace(/（.*$/, '') : 'PDF';
+  const hint = t.max ? `請放進 ${t.max} 份要比較的 PDF（舊版與新版）。` : t.multi ? `可一次選多個檔案，之後還能再加入或調整順序。` : `一次處理一份${what}。`;
+  const privacy = t.ai ? '文字會送到 AI 服務處理，檔案本身不會保存。' : '檔案不會上傳，關掉分頁就清除。';
   stage.innerHTML = `
     <div class="drop" id="drop">
       <svg class="big" viewBox="0 0 80 80" aria-hidden="true">
@@ -723,11 +1084,17 @@ function renderDrop() {
         <use href="#spark" x="58" y="4" width="16" height="16"/>
       </svg>
       <h2>把${what}拖到這裡</h2>
-      <button class="btn btn-primary" id="pick" type="button">選擇${what}檔案</button>
-      <p class="hint">${t.multi ? `可一次選多個檔案，之後還能再加入或調整順序。` : `一次處理一份${what}。`}檔案不會上傳，關掉分頁就清除。</p>
+      <div class="row" style="display:flex;gap:10px;flex-wrap:wrap;justify-content:center">
+        <button class="btn btn-primary" id="pick" type="button">選擇${what}檔案</button>
+        ${t.camera ? `<button class="btn btn-secondary" id="cam" type="button">${ICONS.camera.replace('<svg', '<svg width="20" height="20"')}用鏡頭拍攝</button>` : ''}
+        ${t.paste ? `<button class="btn btn-secondary" id="paste" type="button">貼上 HTML 原始碼</button>` : ''}
+      </div>
+      <p class="hint">${hint}${privacy}</p>
     </div>`;
   const drop = $('#drop');
   $('#pick').addEventListener('click', () => pickFiles(t.multi, onFiles));
+  if (t.camera) $('#cam').addEventListener('click', () => openCamera());
+  if (t.paste) $('#paste').addEventListener('click', () => { state.file = null; state.html = ''; renderWork(); });
   ['dragenter', 'dragover'].forEach(ev => drop.addEventListener(ev, e => { e.preventDefault(); drop.classList.add('over'); }));
   ['dragleave', 'drop'].forEach(ev => drop.addEventListener(ev, e => { e.preventDefault(); drop.classList.remove('over'); }));
   drop.addEventListener('drop', e => onFiles([...e.dataTransfer.files]));
@@ -741,6 +1108,17 @@ async function onFiles(list) {
     for (const f of files) state.files.push({ id: Math.random().toString(36).slice(2), file: f, thumb: null, pages: null, err: null });
     renderWork();
     loadFileThumbs();
+  } else if (t.input === 'file') {
+    state.file = files[0]; state.bytes = await readBytes(files[0]);
+    renderWork();
+  } else if (t.raw) {
+    // unlock / repair: the file may be encrypted or damaged, so don't insist on parsing it
+    state.file = files[0]; state.bytes = await readBytes(files[0]);
+    state.pages = [];
+    try { state.js = await openJs(state.bytes); state.pages = Array.from({ length: state.js.numPages }, (_, i) => ({ i, rot: 0, sel: false, canvas: null })); }
+    catch (e) { state.js = null; state.openErr = e; }
+    renderWork();
+    if (state.js) loadPageThumbs();
   } else {
     overlay.show('讀取檔案');
     try {
@@ -751,7 +1129,7 @@ async function onFiles(list) {
       state.pages = Array.from({ length: state.js.numPages }, (_, i) => ({ i, rot: 0, sel: false, canvas: null }));
       overlay.hide();
       renderWork();
-      loadPageThumbs();
+      if (t.view !== 'editor') loadPageThumbs();
     } catch (e) { overlay.hide(); toast(e.message || '讀取失敗'); }
   }
 }
@@ -790,7 +1168,7 @@ function onOptsChange() {
     $('#v-wm-size').textContent = f.size.value;
     $('#v-wm-op').textContent = f.opacity.value + '%';
   }
-  if (t.id === 'compress') { /* nothing dynamic */ }
+  if (OPTS_CHANGE[t.id]) OPTS_CHANGE[t.id](f);
   updateInfo();
 }
 
@@ -799,7 +1177,11 @@ function updateInfo() {
   if (!el) return;
   if (t.multi) {
     const n = state.files.length;
-    el.textContent = n ? `${n} 個檔案${t.id === 'merge' ? '，拖曳卡片可調整合併順序' : '，拖曳卡片可調整頁序'}` : '';
+    el.textContent = t.id === 'compare' ? (n === 2 ? '左邊是舊版、右邊是新版，可拖曳交換' : `已放入 ${n} / 2 份 PDF`) : n ? `${n} 個檔案${t.id === 'merge' ? '，拖曳卡片可調整合併順序' : '，拖曳卡片可調整頁序'}` : '';
+  } else if (t.view === 'editor' || t.view === 'forms') {
+    /* editor/forms keep their own status line */
+  } else if (!state.js) {
+    el.textContent = state.file ? `${state.file.name} ・ ${fmtSize(state.file.size)}` : '';
   } else {
     const n = state.pages.length;
     if (t.id === 'remove') el.textContent = `共 ${n} 頁，已選 ${state.pages.filter(p => p.sel).length} 頁要刪除`;
@@ -811,7 +1193,8 @@ function updateInfo() {
   const go = $('#go');
   if (go) {
     let disabled = false;
-    if (t.multi) disabled = t.id === 'merge' ? state.files.length < 2 : state.files.length < 1;
+    if (t.multi) disabled = (t.id === 'merge' || t.id === 'compare') ? state.files.length < 2 : state.files.length < 1;
+    if (t.multi && state.files.some(f => f.err)) disabled = true;
     if (t.id === 'remove') disabled = !state.pages.some(p => p.sel) || state.pages.every(p => p.sel);
     if (t.id === 'extract') disabled = !state.pages.some(p => p.sel);
     if (t.id === 'organize') disabled = state.pages.length === 0;
@@ -820,6 +1203,8 @@ function updateInfo() {
     if (msg) {
       let m = '';
       if (t.id === 'merge' && state.files.length === 1) m = '再加入至少一份 PDF 才能合併。';
+      if (t.id === 'compare' && state.files.length === 1) m = '再加入第二份 PDF（新版）才能比較。';
+      if (t.multi && state.files.some(f => f.err)) m = '有檔案無法讀取，請先移除標成紅字的檔案。';
       if (t.id === 'remove' && state.pages.length && state.pages.every(p => p.sel)) m = '不能刪除全部頁面，至少保留一頁。';
       msg.innerHTML = m ? `<p class="notice">${m}</p>` : '';
     }
@@ -919,22 +1304,169 @@ function optionsHtml(t) {
       <div class="field"><label for="pn-start">起始號碼</label><input id="pn-start" name="start" type="number" min="0" value="1"></div>
       <div class="field"><label for="pn-size">字級（pt）</label><input id="pn-size" name="size" type="number" min="6" max="36" value="11"></div>
       <label class="check"><input type="checkbox" name="skipFirst" id="pn-skip">封面不加頁碼</label>`;
+    case 'scan': return `
+      <div class="field"><span class="label">掃描效果</span>
+        <div class="choices" role="radiogroup" aria-label="掃描效果">
+          <label class="choice"><input type="radio" name="filter" value="doc" checked><div><b>文件增強</b><span>拉白背景、加深文字，像影印機掃出來的效果。</span></div></label>
+          <label class="choice"><input type="radio" name="filter" value="gray"><div><b>灰階</b><span>保留陰影層次，檔案較小。</span></div></label>
+          <label class="choice"><input type="radio" name="filter" value="bw"><div><b>黑白</b><span>只留黑與白，最適合純文字文件。</span></div></label>
+          <label class="choice"><input type="radio" name="filter" value="color"><div><b>原色</b><span>不調整，照片原樣放進 PDF。</span></div></label>
+        </div>
+      </div>
+      <div class="field"><span class="label">頁面大小</span>
+        <div class="seg"><label><input type="radio" name="size" value="a4" checked>A4</label><label><input type="radio" name="size" value="letter">Letter</label><label><input type="radio" name="size" value="fit">依照片</label></div>
+      </div>
+      <input type="hidden" name="margin" value="0">
+      <p class="field help" style="margin:0">拍攝時讓文件填滿畫面、光線均勻，效果最好。產生後可以再用「OCR 文字辨識」讓文字可搜尋。</p>`;
+    case 'repair': return `<p class="field help" style="margin:0">會依序嘗試三種方法：重建檔案結構、略過損壞的物件、最後用瀏覽器能讀到的畫面重新產生每一頁。</p>`;
+    case 'ocr': return `
+      <div class="field"><label for="ocr-lang">文件語言</label>
+        <select id="ocr-lang" name="lang">
+          <option value="chi_tra+eng" selected>繁體中文＋英文</option>
+          <option value="chi_sim+eng">簡體中文＋英文</option>
+          <option value="eng">英文</option>
+          <option value="jpn+eng">日文＋英文</option>
+          <option value="kor+eng">韓文＋英文</option>
+        </select>
+      </div>
+      <div class="field"><span class="label">輸出</span>
+        <div class="seg"><label><input type="radio" name="out" value="pdf" checked>可搜尋 PDF</label><label><input type="radio" name="out" value="txt">純文字</label></div>
+      </div>
+      <div class="field"><span class="label">辨識精細度</span>
+        <div class="seg"><label><input type="radio" name="dpi" value="200" checked>標準</label><label><input type="radio" name="dpi" value="300">精細（較慢）</label></div>
+      </div>
+      <p class="field help" style="margin:0">第一次使用會下載約 2～5 MB 的語言資料。原本的頁面畫面不會改變，只是在底下加上隱藏的文字層。</p>`;
+    case 'word2pdf': case 'excel2pdf': case 'html2pdf': return `
+      <div class="field"><span class="label">頁面大小</span>
+        <div class="seg"><label><input type="radio" name="size" value="a4" checked>A4</label><label><input type="radio" name="size" value="letter">Letter</label></div>
+      </div>
+      <div class="field"><span class="label">方向</span>
+        <div class="seg"><label><input type="radio" name="orient" value="p" ${t.id === 'excel2pdf' ? '' : 'checked'}>直式</label><label><input type="radio" name="orient" value="l" ${t.id === 'excel2pdf' ? 'checked' : ''}>橫式</label></div>
+      </div>
+      <div class="field"><span class="label">輸出方式</span>
+        <div class="choices" role="radiogroup" aria-label="輸出方式">
+          <label class="choice"><input type="radio" name="mode" value="image" checked><div><b>直接下載 PDF</b><span>版面最穩定，但文字會變成影像、無法選取。</span></div></label>
+          <label class="choice"><input type="radio" name="mode" value="print"><div><b>用瀏覽器列印成 PDF</b><span>文字可選取、檔案小。在列印視窗選「另存為 PDF」。</span></div></label>
+        </div>
+      </div>
+      ${t.id === 'word2pdf' ? '<p class="field help" style="margin:0">會保留標題、段落、清單、表格與圖片，但頁首頁尾、文字方塊、分欄等複雜排版可能會跑掉。舊版 .doc 請先在 Word 另存成 .docx。</p>' : ''}
+      ${t.id === 'excel2pdf' ? '<p class="field help" style="margin:0">每個工作表會依序排成表格，儲存格的顏色與框線格式不會帶過來。</p>' : ''}`;
+    case 'ppt2pdf': return `<p class="field help" style="margin:0">會還原投影片上的文字、圖片、色塊與表格位置。圖表、SmartArt、特殊字型與動畫效果無法完整呈現，重要簡報請先檢查結果。舊版 .ppt 請先另存成 .pptx。</p>
+      <div class="field"><span class="label">畫質</span>
+        <div class="seg"><label><input type="radio" name="scale" value="1.5">標準</label><label><input type="radio" name="scale" value="2" checked>高</label></div>
+      </div>`;
+    case 'pdf2word': return `
+      <div class="choices" role="radiogroup" aria-label="轉換方式">
+        <label class="choice"><input type="radio" name="mode" value="text" checked><div><b>可編輯文字</b><span>抓出段落與標題，排版會簡化，但可以直接修改內容。</span></div></label>
+        <label class="choice"><input type="radio" name="mode" value="image"><div><b>版面不變</b><span>每一頁放成一張圖片，看起來和原檔一樣，但文字無法編輯。</span></div></label>
+      </div>
+      <p class="field help" style="margin:0">掃描檔沒有文字層，會自動改放頁面圖片。想要可編輯，請先用「OCR 文字辨識」。</p>`;
+    case 'pdf2ppt': return `
+      <div class="field"><span class="label">畫質</span>
+        <div class="seg"><label><input type="radio" name="dpi" value="110">標準</label><label><input type="radio" name="dpi" value="150" checked>高</label><label><input type="radio" name="dpi" value="220">超高</label></div>
+      </div>
+      <label class="check"><input type="checkbox" name="notes" checked>把每頁的文字放進備忘稿</label>
+      <p class="field help" style="margin:0">每一頁會變成一張滿版投影片圖片，畫面和 PDF 一模一樣，可以在上面再加文字與動畫。</p>`;
+    case 'pdf2excel': return `
+      <div class="field"><span class="label">工作表</span>
+        <div class="seg"><label><input type="radio" name="sheets" value="page" checked>每頁一個</label><label><input type="radio" name="sheets" value="one">全部合併</label></div>
+      </div>
+      <label class="check"><input type="checkbox" name="numbers" checked>數字轉成可計算的數值</label>
+      <p class="field help" style="margin:0">依文字的位置自動對齊欄與列，適合報表、帳單這類表格清楚的 PDF。掃描檔請先做 OCR。</p>`;
+    case 'pdf2pdfa': return `
+      <div class="choices" role="radiogroup" aria-label="轉換方式">
+        <label class="choice"><input type="radio" name="mode" value="raster" checked><div><b>標準轉換（建議）</b><span>每一頁轉為高解析影像並加上 PDF/A-2b 標記，最容易通過驗證，但文字無法選取。</span></div></label>
+        <label class="choice"><input type="radio" name="mode" value="keep"><div><b>保留文字</b><span>保留原本內容只加上 PDF/A 標記。若原檔字型沒有內嵌，可能無法通過驗證。</span></div></label>
+      </div>
+      <div class="field"><label for="pdfa-title">文件標題</label><input id="pdfa-title" name="title" type="text" autocomplete="off"></div>`;
+    case 'crop': return `
+      <p class="field help" style="margin:0">在頁面上拖曳框出要保留的範圍，框線可以拖動與調整大小。</p>
+      <div class="field"><span class="label">套用到</span>
+        <div class="seg"><label><input type="radio" name="scope" value="all" checked>全部頁面</label><label><input type="radio" name="scope" value="this">只有這一頁</label></div>
+      </div>
+      <button type="button" class="btn btn-ghost btn-sm" id="autoCrop">自動偵測白邊</button>`;
+    case 'editpdf': return `<p class="field help" style="margin:0">從上方工具列選擇要加入的內容，點一下頁面放上去。物件可以拖曳移動、拉右下角調整大小，選取後按 Delete 刪除。</p>
+      <p class="field help" style="margin:0">要遮掉原本的字，可以先放一個白色方框蓋住，再在上面加新的文字。</p>`;
+    case 'sign': return `<p class="field help" style="margin:0">先建立簽名，再點一下頁面放上去。可以放在多頁，也可以加上日期。</p>
+      <div id="sigList" class="choices"></div>
+      <button type="button" class="btn btn-secondary btn-sm" id="newSig">${ICONS.plus.replace('<svg', '<svg width="16" height="16"')}建立簽名</button>
+      <p class="field help" style="margin:0">這是視覺化的簽名（把簽名圖案放上文件），不是含憑證的數位簽章。</p>`;
+    case 'redact': return `
+      <div class="field"><label for="rd-q">搜尋要遮蔽的文字</label>
+        <div style="display:flex;gap:6px"><input id="rd-q" type="text" placeholder="例如 身分證字號、電話" autocomplete="off"><button type="button" class="btn btn-secondary btn-sm" id="rdFind">全部標記</button></div>
+        <span class="help">也可以直接在頁面上拖曳框選。常用：<button type="button" class="btn btn-ghost btn-sm" data-rdp="id">身分證字號</button><button type="button" class="btn btn-ghost btn-sm" data-rdp="phone">電話</button><button type="button" class="btn btn-ghost btn-sm" data-rdp="email">Email</button></span>
+      </div>
+      <div class="field"><span class="label">遮蔽顏色</span>
+        <div class="seg"><label><input type="radio" name="color" value="#000000" checked>黑色</label><label><input type="radio" name="color" value="#FFFFFF">白色</label></div>
+      </div>
+      <p class="field help" style="margin:0">有遮蔽的頁面會重新產生成影像，底下的文字會被徹底移除、無法再被複製。其他頁面保持不變。</p>`;
+    case 'unlock': return `
+      <div class="field"><label for="ul-pw">PDF 密碼</label><input id="ul-pw" name="password" type="password" autocomplete="off" placeholder="只有限制列印、複製的檔案可以留空"></div>
+      <p class="field help" style="margin:0">請只解除你有權限使用的檔案。密碼只在你的瀏覽器裡使用，不會傳到任何地方。</p>`;
+    case 'protect': return `
+      <div class="field"><label for="pw1">開啟密碼</label><input id="pw1" name="pw" type="password" autocomplete="new-password"></div>
+      <div class="field"><label for="pw2">再輸入一次</label><input id="pw2" name="pw2" type="password" autocomplete="new-password"></div>
+      <div class="field"><span class="label">開啟後允許</span>
+        <label class="check"><input type="checkbox" name="print" checked>列印</label>
+        <label class="check"><input type="checkbox" name="copy" checked>複製文字與圖片</label>
+        <label class="check"><input type="checkbox" name="modify">修改內容</label>
+      </div>
+      <p class="field help" style="margin:0">使用 AES-256 加密。請記好密碼，忘記了就無法再開啟。</p>`;
+    case 'compare': return `
+      <div class="field"><span class="label">比較方式</span>
+        <div class="choices" role="radiogroup" aria-label="比較方式">
+          <label class="choice"><input type="radio" name="mode" value="both" checked><div><b>文字＋畫面</b><span>列出增刪的文字，並標出畫面不同的位置。</span></div></label>
+          <label class="choice"><input type="radio" name="mode" value="text"><div><b>只比文字</b><span>速度最快，適合合約、報告改版。</span></div></label>
+        </div>
+      </div>`;
+    case 'summary': return `
+      <div class="field"><span class="label">長度</span>
+        <div class="seg"><label><input type="radio" name="length" value="short">精簡</label><label><input type="radio" name="length" value="medium" checked>適中</label><label><input type="radio" name="length" value="long">詳細</label></div>
+      </div>
+      <div class="field"><label for="sm-lang">摘要語言</label><select id="sm-lang" name="lang"><option value="zh-Hant">繁體中文</option><option value="en">English</option><option value="ja">日本語</option><option value="zh-Hans">简体中文</option><option value="ko">한국어</option><option value="es">Español</option><option value="fr">Français</option><option value="de">Deutsch</option><option value="vi">Tiếng Việt</option><option value="th">ไทย</option><option value="id">Bahasa Indonesia</option></select></div>
+      <div class="field"><label for="sm-focus">想特別關注的重點（選填）</label><input id="sm-focus" name="focus" type="text" maxlength="200" placeholder="例如 預算、時程、風險" autocomplete="off"></div>
+      ${AI_NOTE}`;
+    case 'translate': return `
+      <div class="field"><label for="tr-lang">翻譯成</label><select id="tr-lang" name="lang"><option value="zh-Hant">繁體中文</option><option value="en">English</option><option value="ja">日本語</option><option value="zh-Hans">简体中文</option><option value="ko">한국어</option><option value="es">Español</option><option value="fr">Français</option><option value="de">Deutsch</option><option value="vi">Tiếng Việt</option><option value="th">ไทย</option><option value="id">Bahasa Indonesia</option></select></div>
+      <div class="field"><span class="label">輸出</span>
+        <div class="choices" role="radiogroup" aria-label="輸出">
+          <label class="choice"><input type="radio" name="out" value="pdf" checked><div><b>保留版面的 PDF</b><span>把譯文放回原本段落的位置。</span></div></label>
+          <label class="choice"><input type="radio" name="out" value="txt"><div><b>純文字</b><span>依段落列出譯文，方便複製。</span></div></label>
+        </div>
+      </div>
+      ${AI_NOTE}`;
+    case 'forms': return `
+      <label class="check"><input type="checkbox" name="flatten">儲存後鎖定欄位（變成文件內容，無法再修改）</label>
+      <p class="field help" style="margin:0">中文內容在某些閱讀器需要鎖定欄位才能正確顯示，建議要寄出的表單勾選這個選項。</p>`;
+    case 'pdf2md': return `
+      <label class="check"><input type="checkbox" name="pagebreak">每頁之間加分隔線</label>
+      <label class="check"><input type="checkbox" name="tables" checked>偵測表格</label>
+      <p class="field help" style="margin:0">依字級判斷標題層級、辨識清單與表格，全部在瀏覽器內完成，不會送到 AI。</p>`;
   }
   return '';
 }
+const AI_NOTE = `<p class="field help" style="margin:0">會把 PDF 的文字送到 AI 服務處理（檔案本身與結果不會被保存）。若網站尚未設定 AI 服務，會改用 Chrome 內建的 AI（如果你的瀏覽器支援）。機密文件請斟酌使用。</p>`;
 
 /* ---------- canvas: file list or page grid ---------- */
 function renderCanvas() {
   const t = state.tool, c = $('#canvas');
   if (t.multi) {
-    c.innerHTML = `<div class="canvas-bar"><span class="info" id="info"></span><button type="button" class="btn btn-secondary btn-sm" id="addMore">${ICONS.plus.replace('<svg', '<svg width="16" height="16"')}加入檔案</button></div>
+    c.innerHTML = `<div class="canvas-bar"><span class="info" id="info"></span>${t.camera ? `<button type="button" class="btn btn-secondary btn-sm" id="camMore">${ICONS.camera.replace('<svg', '<svg width="16" height="16"')}拍攝</button>` : ''}<button type="button" class="btn btn-secondary btn-sm" id="addMore">${ICONS.plus.replace('<svg', '<svg width="16" height="16"')}加入檔案</button></div>
       <ul class="files" id="files"></ul>`;
     $('#addMore').addEventListener('click', () => pickFiles(true, onFiles));
+    if (t.camera) $('#camMore').addEventListener('click', () => openCamera());
     renderFiles();
-  } else if (['remove', 'extract', 'organize', 'rotate'].includes(t.id)) {
+  } else if (t.view === 'pages') {
     c.innerHTML = `<div class="canvas-bar"><span class="info" id="info"></span></div><div class="pages" id="pages"></div>`;
     renderPages();
     bindPageOpts();
+  } else if (t.view === 'editor') {
+    renderEditor(c);
+  } else if (t.view === 'forms') {
+    renderForms(c);
+  } else if (t.input === 'file' || !state.js) {
+    c.innerHTML = `<div class="canvas-bar"><span class="info" id="info"></span></div><div id="fileinfo"></div>`;
+    renderFileInfo();
   } else {
     c.innerHTML = `<div class="canvas-bar"><span class="info" id="info"></span></div><div class="pages" id="pages"></div>`;
     renderPages(true);
@@ -943,6 +1475,19 @@ function renderCanvas() {
   // drop more files directly onto the workspace
   c.addEventListener('dragover', e => { if (t.multi) e.preventDefault(); });
   c.addEventListener('drop', e => { if (t.multi && e.dataTransfer.files.length) { e.preventDefault(); onFiles([...e.dataTransfer.files]); } });
+}
+
+function renderFileInfo() {
+  const t = state.tool, box = $('#fileinfo');
+  if (t.id === 'html2pdf' && !state.file) {
+    box.innerHTML = `<div class="field"><label for="htmlsrc">HTML 原始碼</label><textarea id="htmlsrc" class="textprev" spellcheck="false" placeholder="<h1>標題</h1>\n<p>內容⋯⋯</p>" style="font-family:ui-monospace,Menlo,Consolas,monospace;font-size:13px"></textarea>
+      <span class="help">外部圖片若所在網站不允許跨網域讀取，會顯示成空白。網址轉 PDF 因瀏覽器安全限制無法直接抓取，請先在瀏覽器「另存網頁」成 .html 再上傳。</span></div>`;
+    $('#htmlsrc').value = state.html || '';
+    $('#htmlsrc').addEventListener('input', e => { state.html = e.target.value; });
+    return;
+  }
+  const note = t.raw && !state.js ? `<p class="notice" style="margin-top:12px">${t.id === 'unlock' ? '這份 PDF 需要密碼才能開啟，請在右側輸入密碼。' : '預覽無法開啟這份檔案，看起來確實有損壞，按下修復試試看。'}</p>` : '';
+  box.innerHTML = `<div class="fcard" style="max-width:260px;cursor:default"><div class="thumb">${ICONS[t.id]}</div><div class="name" title="${esc(state.file.name)}">${esc(state.file.name)}</div><div class="meta num">${fmtSize(state.file.size)}</div></div>${note}`;
 }
 
 function renderFiles() {
@@ -1096,7 +1641,8 @@ async function loadPageThumbs() {
 async function run() {
   const t = state.tool;
   const f = $('#opts');
-  const opts = Object.fromEntries(new FormData(f).entries());
+  const opts = f ? Object.fromEntries(new FormData(f).entries()) : (state.lastOpts || {});
+  state.lastOpts = opts;
   overlay.show(t.name);
   try {
     const out = await PROCESS[t.id](opts);
@@ -1109,6 +1655,7 @@ async function run() {
     overlay.hide();
     const msg = $('#msg');
     if (msg) msg.innerHTML = `<p class="notice error">${esc(e.message || '處理失敗，請再試一次。')}</p>`;
+    else toast(e.message || '處理失敗，請再試一次。', 6000);
     console.error(e);
   }
 }
@@ -1345,13 +1892,1618 @@ const PROCESS = {
   },
 };
 
+/* ================= new tools: processing ================= */
+const OPTS_CHANGE = {};
+const PAGE_SIZES = { a4: [595.28, 841.89], letter: [612, 792] };
+const sleep = ms => new Promise(r => setTimeout(r, ms));
+const hasEncryptMarker = bytes => { const n = bytes.length, head = new TextDecoder('latin1').decode(bytes.subarray(Math.max(0, n - 200000))); return /\/Encrypt\s/.test(head) || /\/Encrypt\s/.test(new TextDecoder('latin1').decode(bytes.subarray(0, Math.min(n, 400000)))); };
+
+// ---------- scan filters ----------
+function scanFilter(c, mode) {
+  if (!mode || mode === 'color') return;
+  const ctx = c.getContext('2d', { willReadFrequently: true });
+  const W = c.width, H = c.height;
+  const img = ctx.getImageData(0, 0, W, H), d = img.data;
+  // illumination: heavily downscaled copy, scaled back up = smooth background estimate
+  const sw = Math.max(8, Math.round(W / 24)), sh = Math.max(8, Math.round(H / 24));
+  const small = document.createElement('canvas'); small.width = sw; small.height = sh;
+  const sctx = small.getContext('2d'); sctx.imageSmoothingQuality = 'high'; sctx.drawImage(c, 0, 0, sw, sh);
+  // dilate background (take local max) so text strokes don't darken the estimate
+  const sd = sctx.getImageData(0, 0, sw, sh); const sdd = sd.data, cp = new Uint8ClampedArray(sdd);
+  for (let y = 0; y < sh; y++) for (let x = 0; x < sw; x++) {
+    let m = [0, 0, 0];
+    for (let dy = -1; dy <= 1; dy++) for (let dx = -1; dx <= 1; dx++) {
+      const xx = Math.min(sw - 1, Math.max(0, x + dx)), yy = Math.min(sh - 1, Math.max(0, y + dy)), k = (yy * sw + xx) * 4;
+      for (let ch = 0; ch < 3; ch++) m[ch] = Math.max(m[ch], cp[k + ch]);
+    }
+    const k = (y * sw + x) * 4; sdd[k] = m[0]; sdd[k + 1] = m[1]; sdd[k + 2] = m[2];
+  }
+  sctx.putImageData(sd, 0, 0);
+  const bgc = document.createElement('canvas'); bgc.width = W; bgc.height = H;
+  const bctx = bgc.getContext('2d'); bctx.imageSmoothingQuality = 'high'; bctx.drawImage(small, 0, 0, W, H);
+  const bg = bctx.getImageData(0, 0, W, H).data;
+  for (let i = 0; i < d.length; i += 4) {
+    let r = Math.min(255, d[i] / Math.max(1, bg[i]) * 255), g = Math.min(255, d[i + 1] / Math.max(1, bg[i + 1]) * 255), b = Math.min(255, d[i + 2] / Math.max(1, bg[i + 2]) * 255);
+    if (mode === 'doc') {
+      // gentle S-curve: paper → white, ink → darker
+      const f = v => { v /= 255; v = v < .9 ? Math.pow(v / .9, 1.6) * .9 : 1; return v * 255; };
+      d[i] = f(r); d[i + 1] = f(g); d[i + 2] = f(b);
+    } else {
+      let y = .299 * r + .587 * g + .114 * b;
+      if (mode === 'bw') y = y > 165 ? 255 : 0;
+      else y = y < 235 ? Math.pow(y / 235, 1.3) * 235 : 255;
+      d[i] = d[i + 1] = d[i + 2] = y;
+    }
+  }
+  ctx.putImageData(img, 0, 0);
+}
+
+// ---------- camera ----------
+async function openCamera() {
+  if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) { pickFiles(true, onFiles, true); return; }
+  let stream;
+  try { stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: { ideal: 'environment' }, width: { ideal: 2560 }, height: { ideal: 1920 } }, audio: false }); }
+  catch (e) { toast('無法使用鏡頭（可能未授權或沒有鏡頭），改用選擇照片。'); pickFiles(true, onFiles, true); return; }
+  const shots = [];
+  const wrap = document.createElement('div');
+  wrap.className = 'overlay'; wrap.setAttribute('role', 'dialog'); wrap.setAttribute('aria-label', '拍攝文件');
+  wrap.innerHTML = `<div class="cam-card"><video playsinline autoplay muted></video><div class="cam-bar"><span class="num" id="camCount">已拍 0 張</span><button class="btn btn-primary" id="camShot" type="button">${ICONS.camera.replace('<svg', '<svg width="20" height="20"')}拍照</button><button class="btn btn-secondary" id="camDone" type="button">完成</button></div></div>`;
+  document.body.appendChild(wrap);
+  const v = $('video', wrap); v.srcObject = stream;
+  const close = () => { stream.getTracks().forEach(t => t.stop()); wrap.remove(); document.removeEventListener('keydown', onKey); if (shots.length) onFiles(shots); };
+  const onKey = e => { if (e.key === 'Escape') close(); };
+  document.addEventListener('keydown', onKey);
+  $('#camDone', wrap).addEventListener('click', close);
+  $('#camShot', wrap).addEventListener('click', async () => {
+    if (!v.videoWidth) return;
+    const c = document.createElement('canvas'); c.width = v.videoWidth; c.height = v.videoHeight;
+    c.getContext('2d').drawImage(v, 0, 0);
+    const blob = await canvasBlob(c, 'image/jpeg', .92);
+    shots.push(new File([blob], `scan_${String(state.files.length + shots.length + 1).padStart(2, '0')}.jpg`, { type: 'image/jpeg' }));
+    $('#camCount', wrap).textContent = `已拍 ${shots.length} 張`;
+    v.style.opacity = .3; setTimeout(() => { v.style.opacity = 1; }, 120);
+  });
+}
+
+// ---------- HTML → PDF (shared by Word / Excel / HTML) ----------
+const DOC_CSS = `
+  html,body{margin:0;padding:0;background:#fff}
+  body{font-family:"Noto Sans TC","PingFang TC","Microsoft JhengHei","Heiti TC",Arial,sans-serif;font-size:15px;line-height:1.65;color:#1f1f1f;word-wrap:break-word}
+  img{max-width:100%;height:auto}
+  table{border-collapse:collapse;margin:8px 0}
+  td,th{border:1px solid #9a9a9a;padding:4px 8px;vertical-align:top}
+  h1{font-size:28px}h2{font-size:22px}h3{font-size:18px}
+  p{margin:0 0 10px}
+  .doc-title{font-size:32px;margin:0 0 12px}.doc-subtitle{font-size:18px;color:#555}
+  .sheet-title{font-size:16px;font-weight:700;margin:0 0 8px;color:#603E8D}
+  .sheet td{font-size:12px;white-space:nowrap;padding:2px 6px}
+`;
+function sanitizeHtml(html) {
+  const doc = new DOMParser().parseFromString(html, 'text/html');
+  doc.querySelectorAll('script,iframe,object,embed,frame,frameset,meta[http-equiv],link[rel=import]').forEach(n => n.remove());
+  doc.querySelectorAll('*').forEach(el => { for (const a of [...el.attributes]) { if (/^on/i.test(a.name) || (/^(href|src|action|formaction|xlink:href)$/i.test(a.name) && /^\s*javascript:/i.test(a.value))) el.removeAttribute(a.name); } });
+  return doc;
+}
+function pageDims(o) { let [w, h] = PAGE_SIZES[o.size] || PAGE_SIZES.a4; if (o.orient === 'l') [w, h] = [h, w]; return [w, h]; }
+
+async function makeFrame(doc, widthPx) {
+  const f = document.createElement('iframe');
+  f.setAttribute('sandbox', 'allow-same-origin');
+  f.setAttribute('aria-hidden', 'true');
+  f.style.cssText = `position:fixed;left:-20000px;top:0;width:${widthPx}px;height:800px;border:0;visibility:hidden`;
+  document.body.appendChild(f);
+  const style = doc.createElement('style'); style.textContent = DOC_CSS; doc.head.prepend(style);
+  const fontLink = doc.createElement('link'); fontLink.rel = 'stylesheet'; fontLink.href = 'https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;700&display=swap'; doc.head.prepend(fontLink);
+  await new Promise(res => { f.onload = res; f.srcdoc = '<!doctype html>' + doc.documentElement.outerHTML; setTimeout(res, 8000); });
+  const d = f.contentDocument;
+  await Promise.race([Promise.all([...d.images].map(im => im.complete ? 0 : new Promise(r => { im.onload = im.onerror = r; }))), sleep(8000)]);
+  try { await Promise.race([d.fonts.ready, sleep(5000)]); } catch (_) {}
+  return f;
+}
+
+// Render one or more HTML sections into page images; each section starts on a new page.
+async function htmlSectionsToPdf(sections, o, out, progress) {
+  await loadScript('html2canvas', () => window.html2canvas);
+  const [pw, ph] = pageDims(o);
+  const margin = 36, px = 96 / 72, scale = 2;
+  const contentW = Math.round((pw - margin * 2) * px);
+  for (let s = 0; s < sections.length; s++) {
+    progress && progress(s / sections.length, sections.length > 1 ? `排版第 ${s + 1} / ${sections.length} 部分` : '排版中…');
+    const frame = await makeFrame(sanitizeHtml(sections[s]), contentW);
+    try {
+      const d = frame.contentDocument;
+      const fullW = Math.max(contentW, d.documentElement.scrollWidth, d.body.scrollWidth);
+      if (fullW > contentW) { frame.style.width = fullW + 'px'; await sleep(50); }
+      const fullH = Math.max(d.documentElement.scrollHeight, d.body.scrollHeight, 1);
+      frame.style.height = fullH + 'px';
+      const canvas = await window.html2canvas(d.documentElement, { scale, backgroundColor: '#ffffff', useCORS: true, logging: false, windowWidth: fullW, windowHeight: fullH, width: fullW, height: fullH });
+      await canvasToPages(canvas, out, { pw, ph, margin, fit: fullW * scale });
+    } finally { frame.remove(); }
+  }
+}
+
+// Slice a tall canvas into pages, preferring to break on blank rows so text lines aren't cut.
+async function canvasToPages(canvas, out, { pw, ph, margin, fit }) {
+  const ctx = canvas.getContext('2d', { willReadFrequently: true });
+  const k = (pw - margin * 2) / fit; // pt per canvas px
+  const sliceH = Math.floor((ph - margin * 2) / k);
+  let y = 0;
+  const isBlankRow = row => { const d = ctx.getImageData(0, row, canvas.width, 1).data; for (let i = 0; i < d.length; i += 16) if (d[i] < 245 || d[i + 1] < 245 || d[i + 2] < 245) return false; return true; };
+  while (y < canvas.height - 2) {
+    let end = Math.min(canvas.height, y + sliceH);
+    if (end < canvas.height) {
+      for (let r = end; r > y + sliceH * .8; r -= 2) if (isBlankRow(r)) { end = r; break; }
+    }
+    const part = document.createElement('canvas'); part.width = canvas.width; part.height = end - y;
+    part.getContext('2d').drawImage(canvas, 0, y, canvas.width, end - y, 0, 0, canvas.width, end - y);
+    const img = await out.embedJpg(await canvasBytes(part, 'image/jpeg', .9));
+    const pg = out.addPage([pw, ph]);
+    pg.drawImage(img, { x: margin, y: ph - margin - part.height * k, width: part.width * k, height: part.height * k });
+    y = end;
+  }
+}
+
+function printHtml(sections, o) {
+  const [pw, ph] = pageDims(o);
+  const html = sections.map((h, i) => { const d = sanitizeHtml(h); return `<section style="${i ? 'break-before:page;' : ''}">${d.head.innerHTML.replace(/<title>.*?<\/title>/i, '')}${d.body.innerHTML}</section>`; }).join('');
+  const f = document.createElement('iframe');
+  f.style.cssText = 'position:fixed;right:0;bottom:0;width:0;height:0;border:0';
+  document.body.appendChild(f);
+  const d = f.contentDocument;
+  d.open(); d.write(`<!doctype html><html><head><meta charset="utf-8"><title>${esc(state.file ? baseName(state.file.name) : 'document')}</title><style>${DOC_CSS}@page{size:${pw}pt ${ph}pt;margin:36pt}</style></head><body>${html}</body></html>`); d.close();
+  return new Promise(res => setTimeout(async () => {
+    try { await Promise.race([d.fonts.ready, sleep(3000)]); } catch (_) {}
+    f.contentWindow.focus(); f.contentWindow.print();
+    setTimeout(() => f.remove(), 60000); res();
+  }, 300));
+}
+
+// ---------- PPTX → HTML slides ----------
+const EMU = 9525; // EMU per CSS px
+async function pptxSlides(bytes) {
+  const zip = await JSZip.loadAsync(bytes);
+  const xml = async p => { const f = zip.file(p); return f ? new DOMParser().parseFromString(await f.async('string'), 'application/xml') : null; };
+  const rels = async p => { const dir = p.replace(/[^/]+$/, ''), name = p.replace(/^.*\//, ''); const d = await xml(`${dir}_rels/${name}.rels`); const m = {}; if (d) for (const r of d.getElementsByTagName('Relationship')) { let t = r.getAttribute('Target'); if (r.getAttribute('TargetMode') !== 'External') t = resolvePath(dir, t); m[r.getAttribute('Id')] = { target: t, type: r.getAttribute('Type') }; } return m; };
+  const resolvePath = (dir, t) => { if (t.startsWith('/')) return t.slice(1); const parts = (dir + t).split('/'); const out = []; for (const p of parts) { if (p === '..') out.pop(); else if (p !== '.') out.push(p); } return out.join('/'); };
+  const pres = await xml('ppt/presentation.xml');
+  if (!pres) throw new Error('這不是有效的 .pptx 檔案。');
+  const sz = pres.getElementsByTagName('p:sldSz')[0];
+  const W = +sz.getAttribute('cx') / EMU, H = +sz.getAttribute('cy') / EMU;
+  const prel = await rels('ppt/presentation.xml');
+  const ids = [...pres.getElementsByTagName('p:sldId')].map(n => n.getAttribute('r:id'));
+  // theme colors
+  const themeRel = Object.values(prel).find(r => /theme$/.test(r.type));
+  const theme = themeRel ? await xml(themeRel.target) : null;
+  const scheme = {};
+  if (theme) { const cs = theme.getElementsByTagName('a:clrScheme')[0]; if (cs) for (const c of cs.children) { const v = c.firstElementChild; if (v) scheme[c.localName] = v.localName === 'sysClr' ? (v.getAttribute('lastClr') || (/text/i.test(v.getAttribute('val')) ? '000000' : 'FFFFFF')) : v.getAttribute('val'); } }
+  const majorFont = theme && theme.getElementsByTagName('a:majorFont')[0]?.getElementsByTagName('a:latin')[0]?.getAttribute('typeface');
+  const media = {};
+  const mediaUrl = async p => { if (!(p in media)) { const f = zip.file(p); if (!f) media[p] = null; else { const ext = p.split('.').pop().toLowerCase(); const mime = { png: 'image/png', jpg: 'image/jpeg', jpeg: 'image/jpeg', gif: 'image/gif', bmp: 'image/bmp', svg: 'image/svg+xml', webp: 'image/webp' }[ext]; media[p] = mime ? `data:${mime};base64,${await f.async('base64')}` : null; } } return media[p]; };
+  const color = (el, def) => {
+    if (!el) return def;
+    const s = el.getElementsByTagName('a:srgbClr')[0], sc = el.getElementsByTagName('a:schemeClr')[0], sys = el.getElementsByTagName('a:sysClr')[0];
+    let hex = null, node = null;
+    if (s) { hex = s.getAttribute('val'); node = s; }
+    else if (sc) { let k = sc.getAttribute('val'); k = { tx1: 'dk1', tx2: 'dk2', bg1: 'lt1', bg2: 'lt2' }[k] || k; hex = scheme[k]; node = sc; }
+    else if (sys) { hex = sys.getAttribute('lastClr') || '000000'; node = sys; }
+    if (!hex) return def;
+    let alpha = 1; const a = node.getElementsByTagName('a:alpha')[0]; if (a) alpha = +a.getAttribute('val') / 100000;
+    const lm = node.getElementsByTagName('a:lumMod')[0], lo = node.getElementsByTagName('a:lumOff')[0];
+    let [r, g, b] = [0, 2, 4].map(i => parseInt(hex.substr(i, 2), 16));
+    if (lm || lo) { const m = lm ? +lm.getAttribute('val') / 100000 : 1, off = lo ? +lo.getAttribute('val') / 100000 : 0; [r, g, b] = [r, g, b].map(v => Math.max(0, Math.min(255, Math.round(v * m + 255 * off)))); }
+    return `rgba(${r},${g},${b},${alpha})`;
+  };
+  const child = (el, name) => el && [...el.children].find(c => c.tagName === name);
+  const xfrm = el => { const x = el && (el.getElementsByTagName('a:xfrm')[0] || el.getElementsByTagName('p:xfrm')[0]); if (!x) return null; const off = x.getElementsByTagName('a:off')[0], ext = x.getElementsByTagName('a:ext')[0]; if (!off || !ext) return null; return { x: +off.getAttribute('x') / EMU, y: +off.getAttribute('y') / EMU, w: +ext.getAttribute('cx') / EMU, h: +ext.getAttribute('cy') / EMU, rot: +(x.getAttribute('rot') || 0) / 60000, flipH: x.getAttribute('flipH') === '1' }; };
+  const phKey = sp => { const ph = sp.getElementsByTagName('p:ph')[0]; return ph ? { type: ph.getAttribute('type') || 'body', idx: ph.getAttribute('idx') } : null; };
+  const findPh = (doc, key) => { if (!doc || !key) return null; for (const sp of doc.getElementsByTagName('p:sp')) { const k = phKey(sp); if (k && ((key.idx != null && k.idx === key.idx) || k.type === key.type || (key.type === 'ctrTitle' && k.type === 'title') || (key.type === 'subTitle' && k.type === 'body'))) return sp; } return null; };
+
+  const slides = [];
+  for (const id of ids) {
+    const path = prel[id].target;
+    const sd = await xml(path); const srel = await rels(path);
+    const layoutRel = Object.values(srel).find(r => /slideLayout$/.test(r.type));
+    const layout = layoutRel ? await xml(layoutRel.target) : null;
+    const lrel = layoutRel ? await rels(layoutRel.target) : {};
+    const masterRel = Object.values(lrel).find(r => /slideMaster$/.test(r.type));
+    const master = masterRel ? await xml(masterRel.target) : null;
+    const mrel = masterRel ? await rels(masterRel.target) : {};
+    const bgOf = async (doc, rl) => {
+      const bg = doc && doc.getElementsByTagName('p:bg')[0]; if (!bg) return null;
+      const blip = bg.getElementsByTagName('a:blip')[0];
+      if (blip && rl[blip.getAttribute('r:embed')]) { const u = await mediaUrl(rl[blip.getAttribute('r:embed')].target); if (u) return `url(${u}) center/cover`; }
+      const grad = bg.getElementsByTagName('a:gsLst')[0];
+      if (grad) { const stops = [...grad.getElementsByTagName('a:gs')].map(g => `${color(g, '#fff')} ${+g.getAttribute('pos') / 1000}%`); return `linear-gradient(180deg, ${stops.join(',')})`; }
+      const ref = bg.getElementsByTagName('p:bgRef')[0];
+      return color(bg.getElementsByTagName('a:solidFill')[0] || ref, null);
+    };
+    const background = (await bgOf(sd, srel)) || (await bgOf(layout, lrel)) || (await bgOf(master, mrel)) || '#fff';
+    let html = '';
+    const renderTree = async (tree, rl, off) => {
+      for (const el of tree.children) {
+        const tag = el.tagName;
+        if (tag === 'p:grpSp') {
+          const gx = el.getElementsByTagName('a:xfrm')[0];
+          let o2 = off;
+          if (gx) { const g = xfrm(el); const ch = gx.getElementsByTagName('a:chOff')[0], ce = gx.getElementsByTagName('a:chExt')[0];
+            if (g && ch && ce) { const cx = +ch.getAttribute('x') / EMU, cy = +ch.getAttribute('y') / EMU, cw = +ce.getAttribute('cx') / EMU || 1, chh = +ce.getAttribute('cy') / EMU || 1; const sx = g.w / cw, sy = g.h / chh; o2 = { f: r => off.f({ x: g.x + (r.x - cx) * sx, y: g.y + (r.y - cy) * sy, w: r.w * sx, h: r.h * sy, rot: r.rot, flipH: r.flipH }) }; } }
+          await renderTree(el, rl, o2);
+        } else if (tag === 'p:sp' || tag === 'p:cxnSp') {
+          const key = phKey(el);
+          let r = xfrm(child(el, 'p:spPr')) || xfrm(findPh(layout, key)?.getElementsByTagName('p:spPr')[0]) || xfrm(findPh(master, key)?.getElementsByTagName('p:spPr')[0]);
+          if (!r) continue;
+          r = off.f(r);
+          const spPr = child(el, 'p:spPr');
+          const fill = spPr && child(spPr, 'a:solidFill') ? color(child(spPr, 'a:solidFill'), null) : null;
+          const ln = spPr && child(spPr, 'a:ln'); const lnFill = ln && child(ln, 'a:solidFill') ? color(child(ln, 'a:solidFill'), null) : null;
+          const lnW = ln && ln.getAttribute('w') ? Math.max(1, +ln.getAttribute('w') / EMU) : 1;
+          const geom = spPr && spPr.getElementsByTagName('a:prstGeom')[0]?.getAttribute('prst');
+          const radius = geom === 'ellipse' ? '50%' : geom === 'roundRect' ? '12px' : '0';
+          let text = '';
+          const tx = child(el, 'p:txBody');
+          if (tx) {
+            const bodyPr = child(tx, 'a:bodyPr');
+            const anchor = bodyPr?.getAttribute('anchor') || (key && /title/i.test(key.type) ? 'ctr' : 't');
+            const isTitle = key && /title/i.test(key.type);
+            const lstDef = (master && master.getElementsByTagName(isTitle ? 'p:titleStyle' : 'p:bodyStyle')[0]);
+            const defSz = lstDef?.getElementsByTagName('a:defRPr')[0]?.getAttribute('sz');
+            const autoScale = bodyPr?.getElementsByTagName('a:normAutofit')[0]?.getAttribute('fontScale');
+            const fscale = autoScale ? +autoScale / 100000 : 1;
+            let paras = '';
+            for (const p of tx.getElementsByTagName('a:p')) {
+              const pPr = child(p, 'a:pPr');
+              const algn = pPr?.getAttribute('algn') || (key && key.type === 'ctrTitle' ? 'ctr' : 'l');
+              const lvl = +(pPr?.getAttribute('lvl') || 0);
+              const bullet = !isTitle && key && /body|obj/.test(key.type) && !(pPr && pPr.getElementsByTagName('a:buNone')[0]);
+              let runs = '';
+              for (const n of p.children) {
+                if (n.tagName === 'a:br') { runs += '<br>'; continue; }
+                if (n.tagName !== 'a:r' && n.tagName !== 'a:fld') continue;
+                const rPr = child(n, 'a:rPr');
+                const t = n.getElementsByTagName('a:t')[0]?.textContent || '';
+                const szv = rPr?.getAttribute('sz') || p.getElementsByTagName('a:endParaRPr')[0]?.getAttribute('sz') || defSz || (isTitle ? 4400 : 1800);
+                const fs = (+szv / 100) * fscale * 96 / 72;
+                const c = color(rPr && child(rPr, 'a:solidFill'), scheme.dk1 ? '#' + scheme.dk1 : '#222');
+                const b = rPr?.getAttribute('b') === '1' ? 'font-weight:700;' : '';
+                const i = rPr?.getAttribute('i') === '1' ? 'font-style:italic;' : '';
+                const u = rPr?.getAttribute('u') && rPr.getAttribute('u') !== 'none' ? 'text-decoration:underline;' : '';
+                const face = rPr?.getElementsByTagName('a:latin')[0]?.getAttribute('typeface');
+                const ff = face && !/^\+/.test(face) ? `font-family:'${face.replace(/'/g, '')}','Noto Sans TC',sans-serif;` : (isTitle && majorFont ? `font-family:'${majorFont}','Noto Sans TC',sans-serif;` : '');
+                runs += `<span style="font-size:${fs.toFixed(1)}px;color:${c};${b}${i}${u}${ff}">${esc(t)}</span>`;
+              }
+              if (!runs) runs = '&nbsp;';
+              const ta = { l: 'left', ctr: 'center', r: 'right', just: 'justify' }[algn] || 'left';
+              paras += `<p style="margin:0 0 .2em ${lvl * 24}px;text-align:${ta};line-height:1.2">${bullet && runs !== '&nbsp;' ? '<span style="display:inline-block;width:1em">•</span>' : ''}${runs}</p>`;
+            }
+            const jc = { t: 'flex-start', ctr: 'center', b: 'flex-end' }[anchor] || 'flex-start';
+            text = `<div style="position:absolute;inset:0;padding:4px 8px;display:flex;flex-direction:column;justify-content:${jc};overflow:visible">${paras}</div>`;
+          }
+          const tr = (r.rot ? `rotate(${r.rot}deg)` : '') + (r.flipH ? ' scaleX(-1)' : '');
+          const line = tag === 'p:cxnSp';
+          html += `<div style="position:absolute;left:${r.x}px;top:${r.y}px;width:${r.w}px;height:${line ? 0 : r.h}px;${fill ? `background:${fill};` : ''}${lnFill ? (line ? `border-top:${lnW}px solid ${lnFill};` : `border:${lnW}px solid ${lnFill};`) : ''}border-radius:${radius};${tr ? `transform:${tr};` : ''}box-sizing:border-box">${text}</div>`;
+        } else if (tag === 'p:pic') {
+          let r = xfrm(child(el, 'p:spPr')); if (!r) continue; r = off.f(r);
+          const blip = el.getElementsByTagName('a:blip')[0];
+          const rel = blip && rl[blip.getAttribute('r:embed')];
+          const url = rel ? await mediaUrl(rel.target) : null;
+          if (url) html += `<img src="${url}" style="position:absolute;left:${r.x}px;top:${r.y}px;width:${r.w}px;height:${r.h}px;object-fit:fill;${r.rot ? `transform:rotate(${r.rot}deg);` : ''}">`;
+        } else if (tag === 'p:graphicFrame') {
+          let r = xfrm(el); if (!r) continue; r = off.f(r);
+          const tbl = el.getElementsByTagName('a:tbl')[0];
+          if (tbl) {
+            const rows = [...tbl.getElementsByTagName('a:tr')].map(tr => `<tr>${[...tr.getElementsByTagName('a:tc')].map(tc => { const fill = tc.getElementsByTagName('a:tcPr')[0]; const bgc = fill && child(fill, 'a:solidFill') ? color(child(fill, 'a:solidFill'), '') : ''; const t = [...tc.getElementsByTagName('a:p')].map(p => esc([...p.getElementsByTagName('a:t')].map(x => x.textContent).join(''))).join('<br>'); const sz = tc.getElementsByTagName('a:rPr')[0]?.getAttribute('sz'); return `<td style="border:1px solid #888;padding:4px 6px;${bgc ? `background:${bgc};` : ''}font-size:${sz ? (+sz / 100 * 96 / 72).toFixed(1) : 18}px">${t}</td>`; }).join('')}</tr>`).join('');
+            html += `<table style="position:absolute;left:${r.x}px;top:${r.y}px;width:${r.w}px;border-collapse:collapse;color:#222">${rows}</table>`;
+          } else {
+            html += `<div style="position:absolute;left:${r.x}px;top:${r.y}px;width:${r.w}px;height:${r.h}px;border:1px dashed #bbb;display:grid;place-items:center;color:#999;font-size:14px">（圖表無法轉換）</div>`;
+          }
+        }
+      }
+    };
+    const ident = { f: r => r };
+    // master/layout decorations that aren't placeholders (logos, lines) — slide content on top
+    let deco = '';
+    for (const [doc, rl] of [[master, mrel], [layout, lrel]]) {
+      if (!doc) continue;
+      const tree = doc.getElementsByTagName('p:spTree')[0]; if (!tree) continue;
+      const before = html; html = '';
+      const clone = tree.cloneNode(true);
+      [...clone.children].forEach(c => { if (c.getElementsByTagName('p:ph')[0]) c.remove(); });
+      await renderTree(clone, rl, ident); deco += html; html = before;
+    }
+    const showMaster = !(sd.getElementsByTagName('p:cSld')[0]?.parentNode?.getAttribute?.('showMasterSp') === '0');
+    html = '';
+    await renderTree(sd.getElementsByTagName('p:spTree')[0], srel, ident);
+    slides.push(`<div style="position:relative;width:${W}px;height:${H}px;overflow:hidden;background:${background};font-family:'Noto Sans TC',sans-serif">${showMaster ? deco : ''}${html}</div>`);
+  }
+  return { W, H, slides };
+}
+
+// ---------- header/footer removal shared by Word / Markdown ----------
+function dropRepeating(pagesLines) {
+  const n = pagesLines.length;
+  if (n < 3) return pagesLines.map(p => p.lines);
+  const norm = t => t.replace(/\d+/g, '#').replace(/\s+/g, '');
+  const count = {};
+  pagesLines.forEach(p => { const seen = new Set(); p.lines.forEach(l => { if (l.y < p.height * .06 || l.y + l.h > p.height * .94) { const k = norm(l.text); if (!seen.has(k)) { seen.add(k); count[k] = (count[k] || 0) + 1; } } }); });
+  return pagesLines.map(p => p.lines.filter(l => {
+    const edge = l.y < p.height * .06 || l.y + l.h > p.height * .94;
+    if (!edge) return true;
+    if (/^[-–—\s]*(\d+|[ivxlc]+)\s*([\/／]\s*\d+)?[-–—\s]*$/i.test(l.text) || /^(第\s*\d+\s*頁|page\s*\d+)/i.test(l.text)) return false;
+    return (count[norm(l.text)] || 0) < Math.max(3, n * .6);
+  }));
+}
+// split a line into cells by large gaps (for tables)
+function lineCells(l) {
+  const cells = []; let cur = null;
+  for (const it of l.items) {
+    if (cur && it.x - (cur.x + cur.w) < Math.max(it.size * 1.1, 6)) { const cjk = /[　-鿿]$/.test(cur.text); cur.text += (it.x - (cur.x + cur.w) > it.size * .25 && !cjk ? ' ' : '') + it.str; cur.w = it.x + it.w - cur.x; }
+    else { cur = { text: it.str, x: it.x, w: it.w }; cells.push(cur); }
+  }
+  return cells.map(c => ({ ...c, text: c.text.trim() })).filter(c => c.text);
+}
+
+// lines → blocks, with runs of ≥2 lines that share the same number (≥2) of gap-separated cells kept as tables
+function structureLines(lines, body, tables = true) {
+  const out = [];
+  const cellsOf = lines.map(l => tables ? lineCells(l) : []);
+  let k = 0;
+  while (k < lines.length) {
+    const c0 = cellsOf[k];
+    if (c0.length >= 2) {
+      let j = k + 1;
+      while (j < lines.length && cellsOf[j].length === c0.length) j++;
+      if (j - k >= 2) { out.push({ table: cellsOf.slice(k, j).map(r => r.map(c => c.text)), lines: lines.slice(k, j) }); k = j; continue; }
+    }
+    let j = k + 1;
+    while (j < lines.length && !(cellsOf[j].length >= 2 && j + 1 < lines.length && cellsOf[j + 1].length === cellsOf[j].length)) j++;
+    out.push(...linesToBlocks(lines.slice(k, j), body));
+    k = j;
+  }
+  return out;
+}
+
+// ---------- DOCX builder (hand-rolled OOXML) ----------
+const xmlEsc = s => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c])).replace(/[\u0000-\u0008\u000B\u000C\u000E-\u001F]/g, '');
+async function buildDocx(pages, { pageW, pageH, margin }) {
+  // pages: [{ blocks:[{text, level, bullet}], image?: {bytes, w, h} }]
+  const zip = new JSZip();
+  const media = [];
+  let body = '';
+  const tw = v => Math.round(v * 20);
+  pages.forEach((p, pi) => {
+    if (p.image) {
+      const id = media.length + 1; media.push(p.image.bytes);
+      const maxW = pageW - margin * 2, maxH = pageH - margin * 2;
+      const r = Math.min(maxW / p.image.w, maxH / p.image.h);
+      const cx = Math.round(p.image.w * r * 12700), cy = Math.round(p.image.h * r * 12700);
+      body += `<w:p><w:pPr><w:spacing w:before="0" w:after="0"/><w:jc w:val="center"/></w:pPr><w:r><w:drawing><wp:inline distT="0" distB="0" distL="0" distR="0"><wp:extent cx="${cx}" cy="${cy}"/><wp:docPr id="${id}" name="Page ${pi + 1}"/><a:graphic xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main"><a:graphicData uri="http://schemas.openxmlformats.org/drawingml/2006/picture"><pic:pic xmlns:pic="http://schemas.openxmlformats.org/drawingml/2006/picture"><pic:nvPicPr><pic:cNvPr id="${id}" name="page${id}.jpg"/><pic:cNvPicPr/></pic:nvPicPr><pic:blipFill><a:blip r:embed="rImg${id}"/><a:stretch><a:fillRect/></a:stretch></pic:blipFill><pic:spPr><a:xfrm><a:off x="0" y="0"/><a:ext cx="${cx}" cy="${cy}"/></a:xfrm><a:prstGeom prst="rect"><a:avLst/></a:prstGeom></pic:spPr></pic:pic></a:graphicData></a:graphic></wp:inline></w:drawing></w:r></w:p>`;
+    }
+    for (const b of p.blocks || []) {
+      if (b.table) {
+        const cols = Math.max(...b.table.map(r => r.length));
+        body += `<w:tbl><w:tblPr><w:tblStyle w:val="TableGrid"/><w:tblW w:w="0" w:type="auto"/></w:tblPr><w:tblGrid>${'<w:gridCol/>'.repeat(cols)}</w:tblGrid>${b.table.map(r => `<w:tr>${Array.from({ length: cols }, (_, k) => `<w:tc><w:tcPr><w:tcW w:w="0" w:type="auto"/></w:tcPr><w:p><w:r><w:t xml:space="preserve">${xmlEsc(r[k] || '')}</w:t></w:r></w:p></w:tc>`).join('')}</w:tr>`).join('')}</w:tbl><w:p/>`;
+        continue;
+      }
+      const style = b.level ? `<w:pStyle w:val="Heading${b.level}"/>` : b.bullet ? '<w:pStyle w:val="ListParagraph"/>' : '';
+      body += `<w:p><w:pPr>${style}</w:pPr><w:r>${b.bold && !b.level ? '<w:rPr><w:b/></w:rPr>' : ''}<w:t xml:space="preserve">${xmlEsc(b.text)}</w:t></w:r></w:p>`;
+    }
+    if (pi < pages.length - 1) body += '<w:p><w:r><w:br w:type="page"/></w:r></w:p>';
+  });
+  const sect = `<w:sectPr><w:pgSz w:w="${tw(pageW)}" w:h="${tw(pageH)}"${pageW > pageH ? ' w:orient="landscape"' : ''}/><w:pgMar w:top="${tw(margin)}" w:right="${tw(margin)}" w:bottom="${tw(margin)}" w:left="${tw(margin)}" w:header="360" w:footer="360" w:gutter="0"/></w:sectPr>`;
+  zip.file('[Content_Types].xml', `<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types"><Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/><Default Extension="xml" ContentType="application/xml"/><Default Extension="jpg" ContentType="image/jpeg"/><Override PartName="/word/document.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.document.main+xml"/><Override PartName="/word/styles.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.styles+xml"/></Types>`);
+  zip.file('_rels/.rels', `<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="word/document.xml"/></Relationships>`);
+  zip.file('word/_rels/document.xml.rels', `<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rStyles" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/styles" Target="styles.xml"/>${media.map((_, i) => `<Relationship Id="rImg${i + 1}" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/image" Target="media/page${i + 1}.jpg"/>`).join('')}</Relationships>`);
+  media.forEach((m, i) => zip.file(`word/media/page${i + 1}.jpg`, m));
+  const font = '<w:rFonts w:ascii="Calibri" w:hAnsi="Calibri" w:eastAsia="Microsoft JhengHei" w:cs="Calibri"/>';
+  const hd = (n, sz) => `<w:style w:type="paragraph" w:styleId="Heading${n}"><w:name w:val="heading ${n}"/><w:basedOn w:val="Normal"/><w:next w:val="Normal"/><w:qFormat/><w:pPr><w:keepNext/><w:spacing w:before="${360 - n * 60}" w:after="120"/><w:outlineLvl w:val="${n - 1}"/></w:pPr><w:rPr><w:b/><w:color w:val="2E2640"/><w:sz w:val="${sz}"/></w:rPr></w:style>`;
+  zip.file('word/styles.xml', `<?xml version="1.0" encoding="UTF-8" standalone="yes"?><w:styles xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main"><w:docDefaults><w:rPrDefault><w:rPr>${font}<w:sz w:val="22"/><w:lang w:val="en-US" w:eastAsia="zh-TW"/></w:rPr></w:rPrDefault><w:pPrDefault><w:pPr><w:spacing w:after="120" w:line="300" w:lineRule="auto"/></w:pPr></w:pPrDefault></w:docDefaults><w:style w:type="paragraph" w:default="1" w:styleId="Normal"><w:name w:val="Normal"/><w:qFormat/></w:style>${hd(1, 36)}${hd(2, 30)}${hd(3, 26)}<w:style w:type="paragraph" w:styleId="ListParagraph"><w:name w:val="List Paragraph"/><w:basedOn w:val="Normal"/><w:pPr><w:ind w:left="360"/></w:pPr></w:style><w:style w:type="table" w:styleId="TableGrid"><w:name w:val="Table Grid"/><w:tblPr><w:tblBorders><w:top w:val="single" w:sz="4" w:space="0" w:color="999999"/><w:left w:val="single" w:sz="4" w:space="0" w:color="999999"/><w:bottom w:val="single" w:sz="4" w:space="0" w:color="999999"/><w:right w:val="single" w:sz="4" w:space="0" w:color="999999"/><w:insideH w:val="single" w:sz="4" w:space="0" w:color="999999"/><w:insideV w:val="single" w:sz="4" w:space="0" w:color="999999"/></w:tblBorders></w:tblPr></w:style></w:styles>`);
+  zip.file('word/document.xml', `<?xml version="1.0" encoding="UTF-8" standalone="yes"?><w:document xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships" xmlns:wp="http://schemas.openxmlformats.org/drawingml/2006/wordprocessingDrawing"><w:body>${body}${sect}</w:body></w:document>`);
+  return zip.generateAsync({ type: 'blob', mimeType: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' });
+}
+
+// ---------- PDF/A helpers ----------
+// A compact sRGB-like ICC v2 display profile (D50 PCS, gamma 2.2), generated in place so no binary asset is needed.
+function makeSrgbIcc() {
+  const tags = [];
+  const s15 = v => { const n = Math.round(v * 65536); return [(n >> 24) & 255, (n >> 16) & 255, (n >> 8) & 255, n & 255]; };
+  const xyz = (x, y, z) => [...[0x58, 0x59, 0x5A, 0x20], 0, 0, 0, 0, ...s15(x), ...s15(y), ...s15(z)];
+  const ascii = s => [...s].map(c => c.charCodeAt(0));
+  const u32 = n => [(n >>> 24) & 255, (n >>> 16) & 255, (n >>> 8) & 255, n & 255];
+  const desc = s => { const a = [...ascii(s), 0]; return [...ascii('desc'), 0, 0, 0, 0, ...u32(a.length), ...a, ...new Array(11).fill(0), ...new Array(67).fill(0)]; };
+  const curv = [...ascii('curv'), 0, 0, 0, 0, ...u32(1), 0x02, 0x33, 0, 0];
+  tags.push(['desc', desc('sRGB IEC61966-2.1')]);
+  tags.push(['cprt', [...ascii('text'), 0, 0, 0, 0, ...ascii('No copyright, use freely'), 0]]);
+  tags.push(['wtpt', xyz(0.9642, 1.0, 0.8249)]);
+  tags.push(['rXYZ', xyz(0.4361, 0.2225, 0.0139)]);
+  tags.push(['gXYZ', xyz(0.3851, 0.7169, 0.0971)]);
+  tags.push(['bXYZ', xyz(0.1431, 0.0606, 0.7141)]);
+  tags.push(['rTRC', curv]); tags.push(['gTRC', curv]); tags.push(['bTRC', curv]);
+  const pad4 = a => { while (a.length % 4) a.push(0); return a; };
+  let offset = 128 + 4 + tags.length * 12;
+  const table = [...u32(tags.length)], data = [];
+  for (const [sig, body] of tags) { const b = pad4([...body]); table.push(...ascii(sig), ...u32(offset), ...u32(body.length)); data.push(...b); offset += b.length; }
+  const size = 128 + table.length + data.length;
+  const header = new Array(128).fill(0);
+  const put = (off, arr) => arr.forEach((v, i) => { header[off + i] = v; });
+  put(0, u32(size)); put(8, [0x02, 0x10, 0, 0]); put(12, ascii('mntr')); put(16, ascii('RGB ')); put(20, ascii('XYZ '));
+  put(24, [0x07, 0xE6, 0, 1, 0, 1, 0, 0, 0, 0, 0, 0]); put(36, ascii('acsp')); put(68, [...s15(0.9642), ...s15(1.0), ...s15(0.8249)]);
+  return new Uint8Array([...header, ...table, ...data]);
+}
+function pdfDateString(d) { const p = n => String(n).padStart(2, '0'); return `D:${d.getUTCFullYear()}${p(d.getUTCMonth() + 1)}${p(d.getUTCDate())}${p(d.getUTCHours())}${p(d.getUTCMinutes())}${p(d.getUTCSeconds())}Z`; }
+async function makePdfA(doc, title) {
+  const now = new Date();
+  const producer = '秉軒老師的 PDF 工具箱 (pdf-lib)';
+  doc.setTitle(title, { showInWindowTitleBar: true }); doc.setProducer(producer); doc.setCreator(producer);
+  doc.setCreationDate(now); doc.setModificationDate(now);
+  const iso = now.toISOString().replace(/\.\d{3}Z$/, 'Z');
+  const xmp = `<?xpacket begin="﻿" id="W5M0MpCehiHzreSzNTczkc9d"?>
+<x:xmpmeta xmlns:x="adobe:ns:meta/"><rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#">
+<rdf:Description rdf:about="" xmlns:pdfaid="http://www.aiim.org/pdfa/ns/id/" xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:xmp="http://ns.adobe.com/xap/1.0/" xmlns:pdf="http://ns.adobe.com/pdf/1.3/">
+<pdfaid:part>2</pdfaid:part><pdfaid:conformance>B</pdfaid:conformance>
+<dc:format>application/pdf</dc:format>
+<dc:title><rdf:Alt><rdf:li xml:lang="x-default">${xmlEsc(title)}</rdf:li></rdf:Alt></dc:title>
+<xmp:CreateDate>${iso}</xmp:CreateDate><xmp:ModifyDate>${iso}</xmp:ModifyDate><xmp:MetadataDate>${iso}</xmp:MetadataDate><xmp:CreatorTool>${xmlEsc(producer)}</xmp:CreatorTool>
+<pdf:Producer>${xmlEsc(producer)}</pdf:Producer>
+</rdf:Description></rdf:RDF></x:xmpmeta>
+<?xpacket end="w"?>`;
+  const ctx = doc.context;
+  const meta = ctx.stream(new TextEncoder().encode(xmp), { Type: 'Metadata', Subtype: 'XML' });
+  doc.catalog.set(PDFName.of('Metadata'), ctx.register(meta));
+  const icc = ctx.flateStream(makeSrgbIcc(), { N: 3 });
+  const intent = ctx.obj({ Type: 'OutputIntent', S: 'GTS_PDFA1', OutputConditionIdentifier: PDFString.of('sRGB IEC61966-2.1'), Info: PDFString.of('sRGB IEC61966-2.1'), DestOutputProfile: ctx.register(icc) });
+  doc.catalog.set(PDFName.of('OutputIntents'), ctx.obj([ctx.register(intent)]));
+  const rand = Array.from(crypto.getRandomValues(new Uint8Array(16)), b => b.toString(16).padStart(2, '0')).join('').toUpperCase();
+  ctx.trailerInfo.ID = ctx.obj([PDFHexString.of(rand), PDFHexString.of(rand)]);
+  // PDF/A forbids these in the catalog
+  ['OpenAction', 'AA', 'JavaScript'].forEach(k => doc.catalog.delete(PDFName.of(k)));
+  const names = doc.catalog.lookup(PDFName.of('Names'));
+  if (names instanceof PDFDict) { names.delete(PDFName.of('JavaScript')); names.delete(PDFName.of('EmbeddedFiles')); }
+}
+function findUnembeddedFonts(doc) {
+  const bad = new Set();
+  for (const [, obj] of doc.context.enumerateIndirectObjects()) {
+    if (!(obj instanceof PDFDict)) continue;
+    const type = obj.lookup(PDFName.of('Type'));
+    if (!type || type.toString() !== '/FontDescriptor') continue;
+    if (!obj.has(PDFName.of('FontFile')) && !obj.has(PDFName.of('FontFile2')) && !obj.has(PDFName.of('FontFile3'))) {
+      const n = obj.lookup(PDFName.of('FontName')); bad.add(n ? n.toString().replace(/^\//, '') : '未命名字型');
+    }
+  }
+  return [...bad];
+}
+
+// ---------- text diff ----------
+function lcsDiff(a, b, eq = (x, y) => x === y) {
+  const n = a.length, m = b.length;
+  if (n * m > 25e6) return null;
+  const dp = Array.from({ length: n + 1 }, () => new Uint32Array(m + 1));
+  for (let i = n - 1; i >= 0; i--) for (let j = m - 1; j >= 0; j--) dp[i][j] = eq(a[i], b[j]) ? dp[i + 1][j + 1] + 1 : Math.max(dp[i + 1][j], dp[i][j + 1]);
+  const ops = []; let i = 0, j = 0;
+  while (i < n && j < m) {
+    if (eq(a[i], b[j])) { ops.push({ t: '=', a: a[i], b: b[j] }); i++; j++; }
+    else if (dp[i + 1][j] >= dp[i][j + 1]) ops.push({ t: '-', a: a[i++] });
+    else ops.push({ t: '+', b: b[j++] });
+  }
+  while (i < n) ops.push({ t: '-', a: a[i++] });
+  while (j < m) ops.push({ t: '+', b: b[j++] });
+  return ops;
+}
+function inlineDiff(x, y) {
+  if (x.length > 400 || y.length > 400) return null;
+  const ops = lcsDiff([...x], [...y]);
+  let a = '', b = '';
+  for (const o of ops) {
+    if (o.t === '=') { a += esc(o.a); b += esc(o.b); }
+    else if (o.t === '-') a += `<del>${esc(o.a)}</del>`;
+    else b += `<ins>${esc(o.b)}</ins>`;
+  }
+  return { a: a.replace(/<\/del><del>/g, ''), b: b.replace(/<\/ins><ins>/g, '') };
+}
+
+// ---------- AI ----------
+const LANG_NAMES = { 'zh-Hant': '繁體中文（台灣用語）', en: 'English', ja: '日本語', 'zh-Hans': '简体中文', ko: '한국어', es: 'Español', fr: 'Français', de: 'Deutsch', vi: 'Tiếng Việt', th: 'ไทย', id: 'Bahasa Indonesia' };
+class AiUnavailable extends Error {}
+const withTimeout = (p, ms, msg) => Promise.race([p, new Promise((_, rej) => setTimeout(() => rej(new Error(msg)), ms))]);
+async function aiServer(payload) {
+  let r;
+  try { r = await fetch('api/ai', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) }); }
+  catch (_) { throw new AiUnavailable('offline'); }
+  if (r.status === 404 || r.status === 405 || r.status === 501) throw new AiUnavailable('not-configured');
+  let data = null; try { data = await r.json(); } catch (_) {}
+  if (!r.ok) {
+    if (data && data.code === 'not_configured') throw new AiUnavailable('not-configured');
+    throw new Error((data && data.error) || `AI 服務暫時無法使用（${r.status}），請稍後再試。`);
+  }
+  return data;
+}
+// Chrome's on-device AI (Translator / Summarizer APIs), used when the site has no AI backend.
+async function builtinTranslator(target, sample) {
+  if (!('Translator' in self)) return null;
+  let source = 'en';
+  if ('LanguageDetector' in self) { try { const det = await withTimeout(LanguageDetector.create(), 15000, 'timeout'); const r = await withTimeout(det.detect(sample.slice(0, 2000)), 15000, 'timeout'); if (r && r[0] && r[0].detectedLanguage !== 'und') source = r[0].detectedLanguage; } catch (_) {} }
+  else if (/[぀-ヿ]/.test(sample)) source = 'ja'; else if (/[一-鿿]/.test(sample)) source = 'zh';
+  const tgt = target === 'zh-Hant' ? 'zh-Hant' : target === 'zh-Hans' ? 'zh' : target;
+  if (source.split('-')[0] === tgt.split('-')[0] && source !== 'zh') return { translate: async t => t };
+  try {
+    const av = await withTimeout(Translator.availability({ sourceLanguage: source, targetLanguage: tgt }), 15000, 'timeout');
+    if (av === 'unavailable') return null;
+    const tr = await withTimeout(Translator.create({ sourceLanguage: source, targetLanguage: tgt, monitor(m) { m.addEventListener('downloadprogress', e => overlay.set(e.loaded * .3, '下載瀏覽器內建翻譯模型…')); } }), 45000, 'timeout');
+    return { translate: async t => { const r = await withTimeout(tr.translate(t), 60000, '瀏覽器內建翻譯沒有回應，請稍後再試。'); if (/^Model not available/i.test(r)) throw new Error(AI_UNAVAILABLE_MSG); return r; } };
+  } catch (_) { return null; }
+}
+async function aiTranslateItems(items, lang, onProgress) {
+  const out = new Array(items.length);
+  const batches = []; let cur = [], size = 0;
+  items.forEach((t, i) => { if (cur.length && (size + t.length > 5000 || cur.length >= 80)) { batches.push(cur); cur = []; size = 0; } cur.push(i); size += t.length; });
+  if (cur.length) batches.push(cur);
+  let mode = 'server', builtin = null, done = 0;
+  const worker = async () => {
+    while (batches.length) {
+      const b = batches.shift();
+      const texts = b.map(i => items[i]);
+      let res = null;
+      if (mode === 'server') {
+        try { res = (await aiServer({ task: 'translate', items: texts, lang })).items; }
+        catch (e) { if (!(e instanceof AiUnavailable)) throw e; mode = 'builtin'; }
+      }
+      if (!res) {
+        if (!builtin) { builtin = await builtinTranslator(lang, items.join('\n').slice(0, 3000)); if (!builtin) throw new Error(AI_UNAVAILABLE_MSG); }
+        res = []; for (const t of texts) res.push(await builtin.translate(t));
+      }
+      b.forEach((i, k) => { out[i] = res[k] != null ? String(res[k]) : items[i]; });
+      done += b.length; onProgress && onProgress(done / items.length);
+    }
+  };
+  await Promise.all([worker(), worker(), worker()]);
+  return { items: out, engine: mode === 'server' ? 'Claude' : 'Chrome 內建 AI' };
+}
+const AI_UNAVAILABLE_MSG = '這個網站還沒有設定 AI 服務，而你的瀏覽器也沒有內建 AI 可用。請改用最新版 Chrome 桌機版，或請網站管理者設定 ANTHROPIC_API_KEY。';
+async function aiSummarize(text, o) {
+  try { const r = await aiServer({ task: 'summarize', text, lang: o.lang, length: o.length, focus: o.focus || '' }); return { text: r.text, engine: 'Claude' }; }
+  catch (e) { if (!(e instanceof AiUnavailable)) throw e; }
+  if (!('Summarizer' in self)) throw new Error(AI_UNAVAILABLE_MSG);
+  const outLang = ['en', 'ja', 'es'].includes(o.lang) ? o.lang : 'en';
+  let sm;
+  try {
+    const av = await withTimeout(Summarizer.availability({ outputLanguage: outLang }), 15000, 'timeout');
+    if (av === 'unavailable') throw new Error();
+    sm = await withTimeout(Summarizer.create({ type: 'key-points', format: 'markdown', length: o.length, outputLanguage: outLang, sharedContext: o.focus ? `Focus on: ${o.focus}` : undefined, monitor(m) { m.addEventListener('downloadprogress', e => overlay.set(e.loaded * .3, '下載瀏覽器內建摘要模型…')); } }), 45000, 'timeout');
+  } catch (_) { throw new Error(AI_UNAVAILABLE_MSG); }
+  const summarize = async t => { const r = await withTimeout(sm.summarize(t), 90000, '瀏覽器內建 AI 沒有回應，請稍後再試，或請網站管理者設定 AI 服務。'); if (/^Model not available/i.test(r)) throw new Error(AI_UNAVAILABLE_MSG); return r; };
+  // summarise in chunks, then summarise the summaries
+  const chunks = []; for (let i = 0; i < text.length; i += 6000) chunks.push(text.slice(i, i + 6000));
+  let parts = [];
+  for (let k = 0; k < chunks.length; k++) { overlay.set(.3 + .6 * k / chunks.length, `摘要第 ${k + 1} / ${chunks.length} 段`); parts.push(await summarize(chunks[k])); }
+  let result = parts.length > 1 ? await summarize(parts.join('\n\n').slice(0, 12000)) : parts[0];
+  if (outLang !== o.lang) {
+    const tr = await builtinTranslator(o.lang, result);
+    if (tr) result = (await Promise.all(result.split('\n').map(l => l.trim() ? tr.translate(l) : l))).join('\n');
+  }
+  return { text: result, engine: 'Chrome 內建 AI' };
+}
+
+const PDFJS_ERR = '無法讀取這份 PDF。';
+Object.assign(PROCESS, {
+  async scan(o) {
+    const r = await PROCESS.img2pdf(o);
+    return { ...r, name: state.files.length === 1 ? baseName(state.files[0].file.name) + '.pdf' : 'scan.pdf', title: '掃描檔已產生' };
+  },
+
+  async repair() {
+    const tryOpen = async b => { const d = await PDFDocument.load(b, { updateMetadata: false }); const j = await openJs(b); const n = j.numPages; j.destroy(); return { d, n }; };
+    if (hasEncryptMarker(state.bytes)) throw new Error('這份 PDF 有密碼保護，請先用「解除 PDF 密碼」處理。');
+    // 1) qpdf rebuilds the cross-reference table and rewrites every object
+    overlay.set(.1, '重建檔案結構…');
+    try {
+      const r = await runQpdf(state.bytes, ['--object-streams=generate', '@in', '@out']);
+      if (r.out) { const { n } = await tryOpen(r.out); return { kind: 'file', name: baseName(state.file.name) + '_repaired.pdf', blob: pdfBlob(r.out), title: '修復完成', detail: `重建了檔案結構，共 ${n} 頁${r.code === 3 ? '（過程中修正了一些錯誤）' : ''}` }; }
+    } catch (e) { console.warn('qpdf repair failed', e); }
+    // 2) pdf-lib tolerant parse, copy every page that still parses
+    overlay.set(.45, '略過損壞的物件…');
+    try {
+      const src = await PDFDocument.load(state.bytes, { ignoreEncryption: true, throwOnInvalidObject: false, updateMetadata: false });
+      const out = await PDFDocument.create();
+      await copyPagesTo(out, src, src.getPageIndices().map(i => ({ i })));
+      const bytes = await out.save();
+      const { n } = await tryOpen(bytes);
+      if (n > 0) return { kind: 'file', name: baseName(state.file.name) + '_repaired.pdf', blob: pdfBlob(bytes), title: '修復完成', detail: `略過損壞的部分，救回 ${n} 頁` };
+    } catch (e) { console.warn('pdf-lib repair failed', e); }
+    // 3) whatever pdf.js can still render, page by page
+    overlay.set(.7, '重新產生頁面…');
+    const js = state.js || await openJs(state.bytes).catch(() => null);
+    if (!js) throw new Error('這份檔案損壞得太嚴重，三種方法都無法救回內容。');
+    const out = await PDFDocument.create(); let ok = 0;
+    for (let i = 1; i <= js.numPages; i++) {
+      overlay.set(.7 + .3 * i / js.numPages, `重新產生第 ${i} / ${js.numPages} 頁`);
+      try { const { canvas, vp1 } = await renderPageCanvas(js, i, 200); const img = await out.embedJpg(await canvasBytes(canvas, 'image/jpeg', .88)); out.addPage([vp1.width, vp1.height]).drawImage(img, { x: 0, y: 0, width: vp1.width, height: vp1.height }); ok++; } catch (_) {}
+    }
+    if (!ok) throw new Error('這份檔案損壞得太嚴重，三種方法都無法救回內容。');
+    return { kind: 'file', name: baseName(state.file.name) + '_repaired.pdf', blob: pdfBlob(await out.save()), title: '已盡力救回', detail: `以影像方式重建了 ${ok} / ${js.numPages} 頁，文字將無法選取` };
+  },
+
+  async ocr(o) {
+    overlay.set(0, '載入文字辨識引擎…');
+    await loadScript('tesseract', () => window.Tesseract);
+    const langs = o.lang.split('+');
+    let phase = 'init', fail;
+    const failed = new Promise((_, rej) => { fail = rej; });
+    failed.catch(() => {});
+    const worker = await Promise.race([Tesseract.createWorker(langs, 1, {
+      logger: m => { if (m.status && /loading|initializ/.test(m.status) && phase === 'init') overlay.set((m.progress || 0) * .1, '下載語言資料…'); },
+      errorHandler: e => { console.error(e); fail(new Error(phase === 'init' ? '文字辨識的語言資料下載失敗，請確認網路連線後再試一次。' : '文字辨識過程發生錯誤，請再試一次。')); },
+    }), failed]);
+    try {
+      await worker.setParameters({ user_defined_dpi: String(o.dpi), preserve_interword_spaces: '1' });
+      phase = 'run';
+      const js = state.js, n = js.numPages, dpi = +o.dpi;
+      const doc = o.out === 'pdf' ? await loadPdf(state.bytes) : null;
+      const pages = doc ? doc.getPages() : [];
+      let text = '', chars = 0;
+      for (let i = 1; i <= n; i++) {
+        overlay.set(.1 + .88 * (i - 1) / n, `辨識第 ${i} / ${n} 頁`);
+        const { canvas, vp1 } = await renderPageCanvas(js, i, dpi);
+        const { data } = await Promise.race([worker.recognize(canvas, {}, { text: true, pdf: !!doc, pdfTextOnly: true }), failed]);
+        const t = (data.text || '').replace(/([　-鿿＀-￯])[ \t]+(?=[　-鿿＀-￯])/g, '$1').trim();
+        chars += t.replace(/\s/g, '').length;
+        text += (n > 1 ? `── 第 ${i} 頁 ──\n` : '') + t + '\n\n';
+        if (doc && data.pdf) {
+          const [emb] = await doc.embedPdf(new Uint8Array(data.pdf), [0]);
+          placeOnPage(pages[i - 1], emb, { x: 0, y: 0, w: vp1.width, h: vp1.height }, vp1, 'page');
+        }
+      }
+      if (!chars) throw new Error('沒有辨識到任何文字。請確認語言選擇正確，或改用「精細」再試一次。');
+      if (doc) return { kind: 'file', name: baseName(state.file.name) + '_ocr.pdf', blob: pdfBlob(await doc.save()), title: '辨識完成', detail: `${n} 頁，約 ${chars.toLocaleString()} 字，現在可以搜尋與複製文字了` };
+      return { kind: 'text', name: baseName(state.file.name) + '_ocr.txt', blob: new Blob(['﻿' + text.trim()], { type: 'text/plain' }), text: text.trim(), title: '辨識完成', detail: `${n} 頁，約 ${chars.toLocaleString()} 字` };
+    } finally { worker.terminate(); }
+  },
+
+  async word2pdf(o) {
+    overlay.set(.05, '讀取 Word 檔…');
+    await loadScript('mammoth', () => window.mammoth);
+    let res;
+    const styleMap = ["p[style-name='Title'] => h1.doc-title:fresh", "p[style-name='Subtitle'] => p.doc-subtitle:fresh", "p[style-name='標題'] => h1.doc-title:fresh", "r[style-name='Strong'] => strong"];
+    try { res = await mammoth.convertToHtml({ arrayBuffer: state.bytes.buffer.slice(state.bytes.byteOffset, state.bytes.byteOffset + state.bytes.byteLength) }, { styleMap }); }
+    catch (e) { throw new Error('無法讀取這個 Word 檔，請確認是 .docx 格式且沒有加密。'); }
+    return officeOut([res.value || '<p></p>'], o, 'Word 檔');
+  },
+
+  async excel2pdf(o) {
+    overlay.set(.05, '讀取試算表…');
+    await loadScript('xlsx', () => window.XLSX);
+    let wb;
+    try { wb = XLSX.read(state.bytes, { type: 'array', cellDates: true }); } catch (_) { throw new Error('無法讀取這個試算表，請確認檔案沒有加密或損壞。'); }
+    const sections = wb.SheetNames.map(name => {
+      const ws = wb.Sheets[name];
+      if (!ws['!ref']) return null;
+      const html = XLSX.utils.sheet_to_html(ws, { header: '', footer: '' });
+      return `<div class="sheet-title">${esc(name)}</div><div class="sheet">${html}</div>`;
+    }).filter(Boolean);
+    if (!sections.length) throw new Error('這個試算表沒有任何資料。');
+    return officeOut(sections, o, `${sections.length} 個工作表`);
+  },
+
+  async html2pdf(o) {
+    const html = state.file ? new TextDecoder().decode(state.bytes) : (state.html || '');
+    if (!html.trim()) throw new Error('請先貼上 HTML 原始碼。');
+    return officeOut([html], o, '網頁');
+  },
+
+  async ppt2pdf(o) {
+    overlay.set(.05, '讀取簡報…');
+    await loadScript('html2canvas', () => window.html2canvas);
+    let deck;
+    try { deck = await pptxSlides(state.bytes); } catch (e) { throw new Error(e.message && /pptx/.test(e.message) ? e.message : '無法讀取這份簡報，請確認是 .pptx 格式且沒有加密。'); }
+    if (!deck.slides.length) throw new Error('這份簡報沒有投影片。');
+    const out = await PDFDocument.create();
+    const pw = deck.W * 72 / 96, ph = deck.H * 72 / 96, scale = +o.scale || 2;
+    for (let i = 0; i < deck.slides.length; i++) {
+      overlay.set(.1 + .88 * i / deck.slides.length, `轉換第 ${i + 1} / ${deck.slides.length} 張投影片`);
+      const frame = await makeFrame(sanitizeHtml(`<!doctype html><html><head><style>body{margin:0}</style></head><body>${deck.slides[i]}</body></html>`), Math.ceil(deck.W));
+      try {
+        frame.style.height = Math.ceil(deck.H) + 'px';
+        const d = frame.contentDocument;
+        const c = await window.html2canvas(d.body.firstElementChild, { scale, backgroundColor: null, useCORS: true, logging: false, width: Math.ceil(deck.W), height: Math.ceil(deck.H), windowWidth: Math.ceil(deck.W), windowHeight: Math.ceil(deck.H) });
+        const img = await out.embedJpg(await canvasBytes(c, 'image/jpeg', .9));
+        out.addPage([pw, ph]).drawImage(img, { x: 0, y: 0, width: pw, height: ph });
+      } finally { frame.remove(); }
+    }
+    return { kind: 'file', name: baseName(state.file.name) + '.pdf', blob: pdfBlob(await out.save()), title: '轉換完成', detail: `${deck.slides.length} 張投影片` };
+  },
+
+  async pdf2word(o) {
+    const js = state.js, n = js.numPages;
+    const first = await (await js.getPage(1)).getViewport({ scale: 1 });
+    const pageW = first.width, pageH = first.height;
+    const all = [];
+    for (let i = 1; i <= n; i++) { overlay.set(.6 * (i - 1) / n, `分析第 ${i} / ${n} 頁`); all.push(await pageLines(js, i)); }
+    const cleaned = dropRepeating(all);
+    const body = medianSize(cleaned.flat());
+    const pages = [];
+    for (let i = 0; i < n; i++) {
+      const textual = cleaned[i].reduce((s, l) => s + l.text.length, 0);
+      if (o.mode === 'image' || textual < 5) {
+        overlay.set(.6 + .38 * i / n, `轉換第 ${i + 1} / ${n} 頁影像`);
+        const { canvas } = await renderPageCanvas(js, i + 1, 150);
+        pages.push({ image: { bytes: await canvasBytes(canvas, 'image/jpeg', .85), w: canvas.width, h: canvas.height } });
+      } else pages.push({ blocks: structureLines(cleaned[i], body, true) });
+    }
+    const blob = await buildDocx(pages, { pageW, pageH, margin: o.mode === 'image' ? 18 : 64 });
+    const scanned = pages.filter(p => p.image).length;
+    return { kind: 'file', name: baseName(state.file.name) + '.docx', blob, title: '轉換完成', detail: o.mode === 'image' ? `${n} 頁，每頁一張圖片` : `${n} 頁${scanned ? `（其中 ${scanned} 頁沒有文字，改放圖片）` : ''}` };
+  },
+
+  async pdf2ppt(o) {
+    await loadScript('pptx', () => window.PptxGenJS);
+    const js = state.js, n = js.numPages;
+    const pptx = new PptxGenJS();
+    const first = (await js.getPage(1)).getViewport({ scale: 1 });
+    const W = first.width / 72, H = first.height / 72;
+    pptx.defineLayout({ name: 'PDF', width: W, height: H }); pptx.layout = 'PDF';
+    for (let i = 1; i <= n; i++) {
+      overlay.set((i - 1) / n, `轉換第 ${i} / ${n} 頁`);
+      const { canvas, vp1 } = await renderPageCanvas(js, i, +o.dpi);
+      const slide = pptx.addSlide();
+      const r = Math.min(W / (vp1.width / 72), H / (vp1.height / 72));
+      const w = vp1.width / 72 * r, h = vp1.height / 72 * r;
+      slide.addImage({ data: canvas.toDataURL('image/jpeg', .9), x: (W - w) / 2, y: (H - h) / 2, w, h });
+      if (o.notes) { const { lines } = await pageLines(js, i); const t = lines.map(l => l.text).join('\n'); if (t) slide.addNotes(t); }
+    }
+    overlay.set(.97, '打包簡報…');
+    const blob = await pptx.write({ outputType: 'blob' });
+    return { kind: 'file', name: baseName(state.file.name) + '.pptx', blob, title: '轉換完成', detail: `${n} 張投影片` };
+  },
+
+  async pdf2excel(o) {
+    await loadScript('xlsx', () => window.XLSX);
+    const js = state.js, n = js.numPages;
+    const wb = XLSX.utils.book_new();
+    const merged = [];
+    let cells = 0;
+    const toVal = t => { if (!o.numbers) return t; const s = t.replace(/[,，\s]/g, ''); if (/^[-+]?\(?\$?NT?\$?\d+(\.\d+)?\)?%?$/.test(s) || /^[-+]?\d+(\.\d+)?%?$/.test(s)) { let v = parseFloat(s.replace(/[^\d.\-]/g, '')); if (/^\(.*\)$/.test(s)) v = -v; if (s.endsWith('%')) v /= 100; return isFinite(v) ? v : t; } return t; };
+    for (let i = 1; i <= n; i++) {
+      overlay.set((i - 1) / n, `分析第 ${i} / ${n} 頁`);
+      const { lines } = await pageLines(js, i);
+      const rows = lines.map(l => lineCells(l));
+      const xs = rows.flat().map(c => c.x).sort((a, b) => a - b);
+      const anchors = [];
+      for (const x of xs) { if (!anchors.length || x - anchors[anchors.length - 1].max > 8) anchors.push({ min: x, max: x, xs: [x] }); else { anchors[anchors.length - 1].max = x; anchors[anchors.length - 1].xs.push(x); } }
+      const colOf = x => { let best = 0, d = Infinity; anchors.forEach((a, k) => { const dd = x < a.min ? a.min - x : x > a.max ? x - a.max : 0; if (dd < d) { d = dd; best = k; } }); return best; };
+      const aoa = rows.map(r => { const row = []; for (const c of r) { const k = colOf(c.x); row[k] = row[k] != null ? row[k] + ' ' + c.text : c.text; } return Array.from({ length: anchors.length }, (_, k) => row[k] != null ? toVal(row[k]) : null); });
+      cells += aoa.reduce((s, r) => s + r.filter(v => v != null).length, 0);
+      if (o.sheets === 'one') { if (merged.length) merged.push([]); merged.push(...aoa); }
+      else { const ws = XLSX.utils.aoa_to_sheet(aoa.length ? aoa : [['（這一頁沒有文字）']]); ws['!cols'] = anchors.map((_, k) => ({ wch: Math.min(50, Math.max(8, ...aoa.map(r => String(r[k] ?? '').length * 1.6))) })); XLSX.utils.book_append_sheet(wb, ws, `第${i}頁`); }
+    }
+    if (!cells) throw new Error('這份 PDF 裡找不到文字，可能是掃描檔，請先用「OCR 文字辨識」。');
+    if (o.sheets === 'one') { const ws = XLSX.utils.aoa_to_sheet(merged); XLSX.utils.book_append_sheet(wb, ws, '表格'); }
+    const buf = XLSX.write(wb, { type: 'array', bookType: 'xlsx' });
+    return { kind: 'file', name: baseName(state.file.name) + '.xlsx', blob: new Blob([buf], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' }), title: '轉換完成', detail: `${n} 頁，${cells.toLocaleString()} 個儲存格` };
+  },
+
+  async pdf2pdfa(o) {
+    const title = (o.title || '').trim() || baseName(state.file.name);
+    let doc, warn = '';
+    if (o.mode === 'keep') {
+      doc = await loadPdf(state.bytes);
+      const bad = findUnembeddedFonts(doc);
+      if (bad.length) warn = `注意：有 ${bad.length} 個字型沒有內嵌（${bad.slice(0, 3).join('、')}${bad.length > 3 ? '⋯' : ''}），可能無法通過 PDF/A 驗證，建議改用標準轉換。`;
+      doc.getForm && doc.getForm().getFields().length && doc.getForm().flatten();
+    } else {
+      const js = state.js, n = js.numPages;
+      doc = await PDFDocument.create();
+      for (let i = 1; i <= n; i++) {
+        overlay.set((i - 1) / n, `轉換第 ${i} / ${n} 頁`);
+        const { canvas, vp1 } = await renderPageCanvas(js, i, 200);
+        const img = await doc.embedJpg(await canvasBytes(canvas, 'image/jpeg', .9));
+        doc.addPage([vp1.width, vp1.height]).drawImage(img, { x: 0, y: 0, width: vp1.width, height: vp1.height });
+      }
+    }
+    await makePdfA(doc, title);
+    const bytes = await doc.save({ useObjectStreams: false });
+    return { kind: 'file', name: baseName(state.file.name) + '_pdfa.pdf', blob: pdfBlob(bytes), title: '已轉成 PDF/A-2b', detail: warn || '已加入 PDF/A 識別資訊、色彩描述檔與文件 ID' };
+  },
+
+  async crop(o) {
+    const cb = state.ed && state.ed.crop;
+    if (!cb || cb.fw < .02 || cb.fh < .02) throw new Error('請先在頁面上框出要保留的範圍。');
+    const doc = await loadPdf(state.bytes);
+    const pages = doc.getPages();
+    const targets = o.scope === 'this' ? [state.ed.page] : pages.map((_, i) => i);
+    for (const i of targets) {
+      const vp1 = await vpOf(i);
+      const r = { x: cb.fx * vp1.width, y: cb.fy * vp1.height, w: cb.fw * vp1.width, h: cb.fh * vp1.height };
+      const [x1, y1] = vp1.convertToPdfPoint(r.x, r.y), [x2, y2] = vp1.convertToPdfPoint(r.x + r.w, r.y + r.h);
+      const x = Math.min(x1, x2), y = Math.min(y1, y2), w = Math.abs(x2 - x1), h = Math.abs(y2 - y1);
+      pages[i].setCropBox(x, y, w, h);
+      pages[i].setTrimBox(x, y, w, h);
+      pages[i].setArtBox(x, y, w, h);
+      pages[i].setBleedBox(x, y, w, h);
+    }
+    return { kind: 'file', name: baseName(state.file.name) + '_cropped.pdf', blob: pdfBlob(await doc.save()), title: '裁切完成', detail: o.scope === 'this' ? `裁切了第 ${state.ed.page + 1} 頁` : `裁切了全部 ${pages.length} 頁` };
+  },
+
+  async editpdf() { return applyOverlayItems('_edited.pdf', '變更已儲存'); },
+  async sign() {
+    if (!state.ed.items.some(i => i.type === 'sig')) throw new Error('請先建立簽名，再點一下頁面放上去。');
+    return applyOverlayItems('_signed.pdf', '簽署完成');
+  },
+
+  async redact(o) {
+    const boxes = state.ed.items.filter(i => i.type === 'redact');
+    if (!boxes.length) throw new Error('請先框選或搜尋要遮蔽的內容。');
+    const src = await loadPdf(state.bytes);
+    const out = await PDFDocument.create();
+    const js = state.js, n = js.numPages;
+    const byPage = {};
+    boxes.forEach(b => { (byPage[b.page] = byPage[b.page] || []).push(b); });
+    const dpi = 200, k = dpi / 72;
+    for (let i = 0; i < n; i++) {
+      overlay.set(i / n, `處理第 ${i + 1} / ${n} 頁`);
+      if (!byPage[i]) { await copyPagesTo(out, src, [{ i }]); continue; }
+      const { canvas, vp1 } = await renderPageCanvas(js, i + 1, dpi);
+      const ctx = canvas.getContext('2d'); ctx.fillStyle = o.color || '#000';
+      byPage[i].forEach(b => ctx.fillRect(Math.floor(b.x * k) - 1, Math.floor(b.y * k) - 1, Math.ceil(b.w * k) + 2, Math.ceil(b.h * k) + 2));
+      const img = await out.embedJpg(await canvasBytes(canvas, 'image/jpeg', .92));
+      out.addPage([vp1.width, vp1.height]).drawImage(img, { x: 0, y: 0, width: vp1.width, height: vp1.height });
+    }
+    out.setProducer('秉軒老師的 PDF 工具箱'); out.setCreator('秉軒老師的 PDF 工具箱');
+    const pagesHit = Object.keys(byPage).length;
+    return { kind: 'file', name: baseName(state.file.name) + '_redacted.pdf', blob: pdfBlob(await out.save()), title: '遮蔽完成', detail: `${pagesHit} 頁、共 ${boxes.length} 處已永久遮蔽，原文件的中繼資料也一併移除` };
+  },
+
+  async forms(o) { return saveForms(o); },
+
+  async unlock(o) {
+    const pw = o.password || '';
+    if (!hasEncryptMarker(state.bytes)) return { kind: 'file', name: state.file.name, blob: pdfBlob(state.bytes), title: '這份 PDF 本來就沒有密碼', detail: '可以直接使用，提供原檔下載。' };
+    overlay.set(.2, '解除密碼中…');
+    const r = await runQpdf(state.bytes, pw ? ['--decrypt', `--password=${pw}`, '@in', '@out'] : ['--decrypt', '@in', '@out']);
+    if (!r.out) {
+      if (/invalid password/i.test(r.log)) throw new Error(pw ? '密碼不正確，請再確認一次。' : '這份 PDF 需要開啟密碼，請在右側輸入。');
+      throw new Error('無法解除這份檔案的密碼。');
+    }
+    return { kind: 'file', name: baseName(state.file.name) + '_unlocked.pdf', blob: pdfBlob(r.out), title: '密碼已解除', detail: '已移除開啟密碼與列印、複製限制' };
+  },
+
+  async protect(o) {
+    if (!o.pw) throw new Error('請輸入開啟密碼。');
+    if (o.pw !== o.pw2) throw new Error('兩次輸入的密碼不一樣。');
+    if (o.pw.length < 4) throw new Error('密碼至少 4 個字元。');
+    const owner = Array.from(crypto.getRandomValues(new Uint8Array(18)), b => 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz23456789'[b % 57]).join('');
+    overlay.set(.2, '加密中…');
+    const args = ['--encrypt', o.pw, owner, '256', `--print=${o.print ? 'full' : 'none'}`, `--modify=${o.modify ? 'all' : 'none'}`, `--extract=${o.copy ? 'y' : 'n'}`, '--', '@in', '@out'];
+    const r = await runQpdf(state.bytes, args);
+    if (!r.out) throw new Error('加密失敗：' + (r.log.split('\n').pop() || '未知錯誤'));
+    const allow = [o.print && '列印', o.copy && '複製', o.modify && '修改'].filter(Boolean);
+    return { kind: 'file', name: baseName(state.file.name) + '_protected.pdf', blob: pdfBlob(r.out), title: '加密完成', detail: `AES-256 加密，開啟後${allow.length ? '允許' + allow.join('、') : '禁止列印、複製與修改'}` };
+  },
+
+  async compare(o) {
+    const [fa, fb] = state.files;
+    const [ja, jb] = [await openJs(await readBytes(fa.file)), await openJs(await readBytes(fb.file))];
+    const linesA = [], linesB = [];
+    for (let i = 1; i <= ja.numPages; i++) { overlay.set(.3 * i / ja.numPages, `讀取舊版第 ${i} 頁`); (await pageLines(ja, i)).lines.forEach(l => linesA.push({ t: l.text, p: i })); }
+    for (let i = 1; i <= jb.numPages; i++) { overlay.set(.3 + .3 * i / jb.numPages, `讀取新版第 ${i} 頁`); (await pageLines(jb, i)).lines.forEach(l => linesB.push({ t: l.text, p: i })); }
+    const norm = t => t.replace(/\s+/g, '');
+    let ops = lcsDiff(linesA, linesB, (x, y) => norm(x.t) === norm(y.t));
+    if (!ops) throw new Error('兩份文件太長，無法一次比較。請先分割成較少頁數再比較。');
+    // pair adjacent deletions/insertions as modifications
+    const rows = []; let k = 0, adds = 0, dels = 0, mods = 0;
+    while (k < ops.length) {
+      if (ops[k].t === '=') { rows.push({ t: '=', a: ops[k].a, b: ops[k].b }); k++; continue; }
+      const del = [], ins = [];
+      while (k < ops.length && ops[k].t !== '=') { (ops[k].t === '-' ? del : ins).push(ops[k]); k++; }
+      const m = Math.min(del.length, ins.length);
+      for (let q = 0; q < m; q++) { rows.push({ t: '~', a: del[q].a, b: ins[q].b }); mods++; }
+      del.slice(m).forEach(d => { rows.push({ t: '-', a: d.a }); dels++; });
+      ins.slice(m).forEach(d => { rows.push({ t: '+', b: d.b }); adds++; });
+    }
+    const visual = [];
+    if (o.mode === 'both') {
+      const np = Math.max(ja.numPages, jb.numPages);
+      for (let i = 1; i <= np; i++) {
+        overlay.set(.6 + .38 * i / np, `比對第 ${i} / ${np} 頁畫面`);
+        if (i > ja.numPages || i > jb.numPages) { visual.push({ page: i, missing: i > ja.numPages ? 'a' : 'b' }); continue; }
+        const A = await renderPageCanvas(ja, i, 72), B = await renderPageCanvas(jb, i, 72);
+        const W = Math.max(A.canvas.width, B.canvas.width), H = Math.max(A.canvas.height, B.canvas.height);
+        const get = c => { const x = document.createElement('canvas'); x.width = W; x.height = H; const cx = x.getContext('2d'); cx.fillStyle = '#fff'; cx.fillRect(0, 0, W, H); cx.drawImage(c, 0, 0); return cx.getImageData(0, 0, W, H); };
+        const da = get(A.canvas).data, dbi = get(B.canvas), db = dbi.data;
+        const outC = document.createElement('canvas'); outC.width = W; outC.height = H;
+        const oc = outC.getContext('2d'); const od = oc.createImageData(W, H);
+        let diff = 0;
+        for (let p = 0; p < da.length; p += 4) {
+          const d = Math.abs(da[p] - db[p]) + Math.abs(da[p + 1] - db[p + 1]) + Math.abs(da[p + 2] - db[p + 2]);
+          const g = 255 - (255 - (db[p] * .3 + db[p + 1] * .59 + db[p + 2] * .11)) * .35;
+          if (d > 90) { diff++; od.data[p] = 230; od.data[p + 1] = 40; od.data[p + 2] = 70; }
+          else { od.data[p] = od.data[p + 1] = od.data[p + 2] = g; }
+          od.data[p + 3] = 255;
+        }
+        oc.putImageData(od, 0, 0);
+        const ratio = diff / (W * H);
+        if (ratio > 0.0003) visual.push({ page: i, ratio, canvas: outC });
+      }
+    }
+    ja.destroy(); jb.destroy();
+    return { kind: 'compare', title: rows.some(r => r.t !== '=') || visual.length ? '比較完成' : '兩份文件沒有差異', rows, adds, dels, mods, visual, names: [fa.file.name, fb.file.name], pages: [ja.numPages, jb.numPages], mode: o.mode };
+  },
+
+  async summary(o) {
+    const pages = await extractAllText(state.js, i => overlay.set(.2 * i / state.js.numPages, `讀取第 ${i} 頁文字`));
+    const text = pages.map((t, i) => `[第 ${i + 1} 頁]\n${t}`).join('\n\n');
+    if (text.replace(/\[第 \d+ 頁\]|\s/g, '').length < 20) throw new Error('這份 PDF 裡幾乎沒有文字，可能是掃描檔，請先用「OCR 文字辨識」。');
+    if (text.length > 400000) throw new Error(`這份文件約 ${Math.round(text.length / 1000)}K 字，超過一次摘要的上限（約 40 萬字），請先分割成較小的檔案。`);
+    overlay.set(.3, 'AI 正在閱讀並整理重點…（長文件約需 30 秒到 1 分鐘）');
+    const r = await aiSummarize(text, o);
+    return { kind: 'text', md: true, name: baseName(state.file.name) + '_摘要.md', blob: new Blob(['﻿' + r.text], { type: 'text/markdown' }), text: r.text, title: '摘要完成', detail: `${state.js.numPages} 頁 ・ 由 ${r.engine} 產生，重要決策請再核對原文` };
+  },
+
+  async translate(o) {
+    const js = state.js, n = js.numPages;
+    const pages = [];
+    for (let i = 1; i <= n; i++) { overlay.set(.1 * i / n, `分析第 ${i} 頁`); pages.push(await pageLines(js, i)); }
+    const body = medianSize(pages.flatMap(p => p.lines));
+    // table rows are translated row by row so each stays on its own line
+    const blocks = pages.map(p => structureLines(p.lines, body, true).flatMap(b => b.table ? b.lines.map(l => ({ text: l.text, x: l.x, y: l.y, w: l.w, h: l.h, size: l.size, level: 0, lines: [l] })) : [b]));
+    const flat = blocks.flatMap((bs, pi) => bs.map(b => ({ pi, b })));
+    if (!flat.length) throw new Error('這份 PDF 裡找不到文字，可能是掃描檔，請先用「OCR 文字辨識」。');
+    const total = flat.reduce((s, x) => s + x.b.text.length, 0);
+    if (total > 300000) throw new Error('文件太長（超過 30 萬字），請先分割成較小的檔案再翻譯。');
+    overlay.set(.12, 'AI 翻譯中…');
+    const { items, engine } = await aiTranslateItems(flat.map(x => x.b.text), o.lang, f => overlay.set(.12 + .7 * f, `AI 翻譯中… ${Math.round(f * 100)}%`));
+    flat.forEach((x, k) => { x.b.tr = items[k]; });
+    if (o.out === 'txt') {
+      const text = blocks.map((bs, i) => (n > 1 ? `## 第 ${i + 1} 頁\n\n` : '') + bs.map(b => (b.level ? '#'.repeat(Math.min(3, b.level + 1)) + ' ' : '') + b.tr).join('\n\n')).join('\n\n');
+      return { kind: 'text', md: true, name: `${baseName(state.file.name)}_${o.lang}.md`, blob: new Blob(['﻿' + text], { type: 'text/markdown' }), text, title: '翻譯完成', detail: `${n} 頁 ・ 由 ${engine} 翻譯` };
+    }
+    const doc = await loadPdf(state.bytes);
+    const pdfPages = doc.getPages();
+    const white = await doc.embedPng(await (async () => { const c = document.createElement('canvas'); c.width = c.height = 2; const x = c.getContext('2d'); x.fillStyle = '#fff'; x.fillRect(0, 0, 2, 2); return canvasBytes(c); })());
+    const patchCache = {};
+    for (let pi = 0; pi < n; pi++) {
+      overlay.set(.82 + .17 * pi / n, `排版第 ${pi + 1} / ${n} 頁`);
+      if (!blocks[pi].length) continue;
+      const { canvas, vp1 } = await renderPageCanvas(js, pi + 1, 36, '#fff', pages[pi].vp.rotation);
+      const sx = canvas.width / vp1.width, sctx = canvas.getContext('2d', { willReadFrequently: true });
+      for (const b of blocks[pi]) {
+        if (!b.tr || !b.tr.trim()) continue;
+        // sample the background just outside the block so the patch blends in
+        const px = Math.max(0, Math.floor((b.x - 2) * sx)), py = Math.max(0, Math.floor((b.y - 2) * sx));
+        const d = sctx.getImageData(px, py, 1, 1).data;
+        const bgHex = d[0] > 245 && d[1] > 245 && d[2] > 245 ? null : `#${[d[0], d[1], d[2]].map(v => v.toString(16).padStart(2, '0')).join('')}`;
+        let patch = white;
+        if (bgHex) { if (!patchCache[bgHex]) { const c = document.createElement('canvas'); c.width = c.height = 2; const x = c.getContext('2d'); x.fillStyle = bgHex; x.fillRect(0, 0, 2, 2); patchCache[bgHex] = await doc.embedPng(await canvasBytes(c)); } patch = patchCache[bgHex]; }
+        const pad = 1;
+        placeOnPage(pdfPages[pi], patch, { x: b.x - pad, y: b.y - pad, w: b.w + pad * 2, h: b.h + pad * 2 + b.size * .28 }, vp1); // extra room covers descenders
+        const lum = bgHex ? (d[0] * .3 + d[1] * .59 + d[2] * .11) : 255;
+        let size = b.size * .92, im;
+        const boxW = Math.max(b.w, 40);
+        for (let t = 0; t < 8; t++) {
+          im = await textBoxImage(b.tr, { size, width: boxW, color: lum < 110 ? '#ffffff' : '#1f1f1f', weight: b.level ? 700 : 400, lineHeight: 1.22, k: 3 });
+          if (im.h <= b.h * 1.08 + size * .3 || size <= 5) break;
+          size *= .88;
+        }
+        const img = await doc.embedPng(im.bytes);
+        placeOnPage(pdfPages[pi], img, { x: b.x, y: b.y, w: im.w, h: im.h }, vp1);
+      }
+    }
+    return { kind: 'file', name: `${baseName(state.file.name)}_${o.lang}.pdf`, blob: pdfBlob(await doc.save()), title: '翻譯完成', detail: `${n} 頁 ・ 由 ${engine} 翻譯，譯文放回原本位置` };
+  },
+
+  async pdf2md(o) {
+    const js = state.js, n = js.numPages;
+    const all = [];
+    for (let i = 1; i <= n; i++) { overlay.set((i - 1) / n, `分析第 ${i} / ${n} 頁`); all.push(await pageLines(js, i)); }
+    const cleaned = dropRepeating(all);
+    const body = medianSize(cleaned.flat());
+    const out = [];
+    cleaned.forEach((lines, pi) => {
+      if (o.pagebreak && pi) out.push('---');
+      for (const b of structureLines(lines, body, !!o.tables)) {
+        if (b.table) {
+          const cell = t => t.replace(/\|/g, '\\|');
+          const cols = Math.max(...b.table.map(r => r.length));
+          const row = r => '| ' + Array.from({ length: cols }, (_, q) => cell(r[q] || '')).join(' | ') + ' |';
+          out.push(row(b.table[0]), '| ' + Array(cols).fill('---').join(' | ') + ' |', ...b.table.slice(1).map(row), '');
+          continue;
+        }
+        const t = b.text;
+        if (b.level) out.push('#'.repeat(b.level) + ' ' + t);
+        else if (b.bullet) out.push(/^\d+[.)、]/.test(t) ? t.replace(/^(\d+)[.)、]\s*/, '$1. ') : '- ' + t.replace(/^([•●○▪■◆\-–*])\s*/, ''));
+        else out.push(b.bold ? `**${t}**` : t);
+        out.push('');
+      }
+    });
+    const text = out.join('\n').replace(/\n{3,}/g, '\n\n').trim();
+    if (!text) throw new Error('這份 PDF 裡找不到文字，可能是掃描檔，請先用「OCR 文字辨識」。');
+    return { kind: 'text', md: true, name: baseName(state.file.name) + '.md', blob: new Blob([text], { type: 'text/markdown' }), text, title: '轉換完成', detail: `${n} 頁，${text.length.toLocaleString()} 個字元` };
+  },
+});
+
+async function officeOut(sections, o, what) {
+  if (o.mode === 'print') {
+    await printHtml(sections, o);
+    return { kind: 'print', title: '已開啟列印視窗', detail: '在「目的地」選擇「另存為 PDF」，就能存成文字可選取的 PDF。如果沒有看到視窗，請允許本網站開啟彈出視窗後再試一次。' };
+  }
+  const out = await PDFDocument.create();
+  await htmlSectionsToPdf(sections, o, out, (f, t) => overlay.set(.1 + .85 * f, t));
+  const name = state.file ? baseName(state.file.name) + '.pdf' : 'page.pdf';
+  return { kind: 'file', name, blob: pdfBlob(await out.save()), title: '轉換完成', detail: `${what}，共 ${out.getPageCount()} 頁` };
+}
+
+/* ================= page editor (crop / edit / sign / redact) ================= */
+const vpCache = new WeakMap();
+async function vpOf(i) {
+  let m = vpCache.get(state.js); if (!m) { m = {}; vpCache.set(state.js, m); }
+  if (!m[i]) { const p = await state.js.getPage(i + 1); m[i] = p.getViewport({ scale: 1 }); }
+  return m[i];
+}
+const ED_TOOLS = {
+  editpdf: [['select', '選取', 'pointer'], ['text', '文字', 'text'], ['image', '圖片', 'image'], ['rect', '方框', 'rect'], ['hl', '螢光筆', 'hl'], ['draw', '畫筆', 'pen']],
+  sign: [['select', '選取', 'pointer'], ['sig', '放簽名', 'sign'], ['date', '日期', 'calendar'], ['text', '文字', 'text']],
+  redact: [['select', '選取', 'pointer'], ['redact', '框選遮蔽', 'rect']],
+  crop: [],
+};
+const ED_COLORS = ['#2E2640', '#B3364A', '#1D5FD1', '#1D6E66', '#FFFFFF', '#FFE45C'];
+let uid = 0;
+function renderEditor(c) {
+  const t = state.tool;
+  state.ed = state.ed && state.ed.js === state.js ? state.ed : { js: state.js, page: 0, zoom: 1, items: [], tool: t.id === 'redact' ? 'redact' : t.id === 'sign' ? 'sig' : t.id === 'editpdf' ? 'text' : 'select', color: t.id === 'editpdf' ? '#2E2640' : '#2E2640', size: 14, sel: null, crop: t.id === 'crop' ? { fx: .06, fy: .06, fw: .88, fh: .88 } : null, sigs: state.ed?.sigs || [], sigSel: 0 };
+  const tools = ED_TOOLS[t.id];
+  c.innerHTML = `
+    ${tools.length ? `<div class="ed-bar" role="toolbar" aria-label="編輯工具">
+      ${tools.map(([id, label, ic]) => `<button type="button" class="ed-tool" data-tool="${id}" aria-pressed="${state.ed.tool === id}">${ICONS[ic]}<span>${label}</span></button>`).join('')}
+      ${t.id === 'editpdf' || t.id === 'sign' ? `<span class="ed-sep"></span>
+        <div class="ed-colors" role="radiogroup" aria-label="顏色">${ED_COLORS.map(col => `<label style="background:${col}" title="${col}"><input type="radio" name="edcolor" value="${col}" ${col === state.ed.color ? 'checked' : ''}><span class="sr">${col}</span></label>`).join('')}</div>
+        <label class="ed-size">字級 <select id="edSize">${[9, 10, 11, 12, 14, 16, 18, 22, 28, 36, 48].map(v => `<option ${v === state.ed.size ? 'selected' : ''}>${v}</option>`).join('')}</select></label>` : ''}
+      <span class="ed-sep"></span>
+      <button type="button" class="ed-tool" id="edDel" disabled>${ICONS.trash}<span>刪除</span></button>
+    </div>` : ''}
+    <div class="canvas-bar">
+      <span class="info" id="info"></span>
+      <button type="button" class="icon-btn" id="edPrev" aria-label="上一頁">${ICONS.up}</button>
+      <label class="ed-pg"><select id="edPage" aria-label="頁碼">${Array.from({ length: state.js.numPages }, (_, i) => `<option value="${i}">第 ${i + 1} 頁</option>`).join('')}</select><span class="num">/ ${state.js.numPages}</span></label>
+      <button type="button" class="icon-btn" id="edNext" aria-label="下一頁">${ICONS.down}</button>
+      <button type="button" class="icon-btn" id="edZo" aria-label="縮小">${ICONS.zoomout}</button>
+      <button type="button" class="icon-btn" id="edZi" aria-label="放大">${ICONS.zoomin}</button>
+    </div>
+    <div class="ed-wrap" id="edwrap"><div class="ed-page" id="edpage"><canvas id="edcv"></canvas><div class="ed-layer" id="edlayer" data-tool="${state.ed.tool}"></div></div></div>`;
+  $$('.ed-tool[data-tool]', c).forEach(b => b.addEventListener('click', () => setEdTool(b.dataset.tool)));
+  $$('input[name="edcolor"]', c).forEach(r => r.addEventListener('change', () => { state.ed.color = r.value; const it = selItem(); if (it && 'color' in it) { it.color = r.value; drawItems(); } }));
+  $('#edSize') && $('#edSize').addEventListener('change', e => { state.ed.size = +e.target.value; const it = selItem(); if (it && it.type === 'text') { it.size = state.ed.size; drawItems(); } });
+  $('#edDel') && $('#edDel').addEventListener('click', () => deleteSel());
+  $('#edPrev').addEventListener('click', () => gotoPage(state.ed.page - 1));
+  $('#edNext').addEventListener('click', () => gotoPage(state.ed.page + 1));
+  $('#edPage').addEventListener('change', e => gotoPage(+e.target.value));
+  $('#edZo').addEventListener('click', () => { state.ed.zoom = Math.max(.5, state.ed.zoom / 1.25); drawPage(); });
+  $('#edZi').addEventListener('click', () => { state.ed.zoom = Math.min(3, state.ed.zoom * 1.25); drawPage(); });
+  bindLayer($('#edlayer'));
+  if (!renderEditor.keysBound) { renderEditor.keysBound = true; document.addEventListener('keydown', e => { if (!state || state.tool.view !== 'editor' || !state.ed) return; if ((e.key === 'Delete' || e.key === 'Backspace') && state.ed.sel && !e.target.closest('[contenteditable="true"],input,textarea,select')) { e.preventDefault(); deleteSel(); } }); }
+  if (t.id === 'sign') renderSigList();
+  if (t.id === 'crop') $('#autoCrop').addEventListener('click', autoCrop);
+  if (t.id === 'redact') bindRedactOpts();
+  new ResizeObserver(() => { if ($('#edwrap')) drawPage(true); }).observe($('#edwrap'));
+  drawPage();
+}
+function setEdTool(id) {
+  if (id === 'image') { pickImage(); return; }
+  if (id === 'sig' && !state.ed.sigs.length) { openSigDialog(); }
+  if (id === 'date') { const d = new Date(); addItemAtCenter({ type: 'text', text: `${d.getFullYear()}/${String(d.getMonth() + 1).padStart(2, '0')}/${String(d.getDate()).padStart(2, '0')}`, size: state.ed.size, color: state.ed.color }); return; }
+  state.ed.tool = id;
+  $$('.ed-tool[data-tool]').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.tool === id)));
+  $('#edlayer').dataset.tool = id;
+}
+const selItem = () => state.ed.items.find(i => i.id === state.ed.sel);
+function deleteSel() { if (!state.ed.sel) return; state.ed.items = state.ed.items.filter(i => i.id !== state.ed.sel); state.ed.sel = null; drawItems(); }
+function gotoPage(i) { if (i < 0 || i >= state.js.numPages) return; state.ed.page = i; state.ed.sel = null; drawPage(); }
+let drawToken = 0;
+async function drawPage(resizeOnly) {
+  const ed = state.ed, wrap = $('#edwrap'); if (!wrap) return;
+  const vp1 = await vpOf(ed.page);
+  const avail = Math.max(240, wrap.clientWidth - 2);
+  const scale = Math.min(avail / vp1.width, 1.6) * ed.zoom;
+  if (resizeOnly && Math.abs((ed.scale || 0) - scale) < .01) return;
+  ed.scale = scale;
+  const token = ++drawToken;
+  const page = await state.js.getPage(ed.page + 1);
+  const vp = page.getViewport({ scale });
+  const dpr = Math.min(2, window.devicePixelRatio || 1);
+  const cv = $('#edcv'); if (!cv || token !== drawToken) return;
+  const off = document.createElement('canvas'); off.width = Math.ceil(vp.width * dpr); off.height = Math.ceil(vp.height * dpr);
+  const ctx = off.getContext('2d'); ctx.fillStyle = '#fff'; ctx.fillRect(0, 0, off.width, off.height);
+  await page.render({ canvasContext: ctx, viewport: page.getViewport({ scale: scale * dpr }) }).promise;
+  if (token !== drawToken || !$('#edcv')) return;
+  cv.width = off.width; cv.height = off.height; cv.getContext('2d').drawImage(off, 0, 0);
+  cv.style.width = vp.width + 'px'; cv.style.height = vp.height + 'px';
+  const pg = $('#edpage'); pg.style.width = vp.width + 'px'; pg.style.height = vp.height + 'px';
+  $('#edPage').value = String(ed.page);
+  $('#edPrev').disabled = ed.page === 0; $('#edNext').disabled = ed.page === state.js.numPages - 1;
+  drawItems();
+}
+function edInfo() {
+  const t = state.tool, el = $('#info'); if (!el) return;
+  const n = state.ed.items.length;
+  el.textContent = t.id === 'crop' ? '拖曳框線調整要保留的範圍' : t.id === 'redact' ? (n ? `已標記 ${n} 處要遮蔽` : '在頁面上拖曳框出要遮蔽的地方') : t.id === 'sign' ? (state.ed.items.filter(i => i.type === 'sig').length ? `已放 ${state.ed.items.filter(i => i.type === 'sig').length} 個簽名` : '點一下頁面放上簽名') : (n ? `已加入 ${n} 個物件` : '選擇工具後點一下頁面');
+  const go = $('#go');
+  if (go) go.disabled = t.id === 'crop' ? false : t.id === 'sign' ? !state.ed.items.some(i => i.type === 'sig') : !n;
+  const del = $('#edDel'); if (del) del.disabled = !state.ed.sel;
+}
+function drawItems() {
+  const ed = state.ed, layer = $('#edlayer'); if (!layer) return;
+  const s = ed.scale;
+  layer.innerHTML = '';
+  if (ed.crop) {
+    vpOf(ed.page).then(vp1 => {
+      const r = { x: ed.crop.fx * vp1.width, y: ed.crop.fy * vp1.height, w: ed.crop.fw * vp1.width, h: ed.crop.fh * vp1.height };
+      const el = document.createElement('div'); el.className = 'ed-item ed-crop sel'; el.dataset.id = 'crop';
+      Object.assign(el.style, { left: r.x * s + 'px', top: r.y * s + 'px', width: r.w * s + 'px', height: r.h * s + 'px' });
+      el.innerHTML = '<span class="ed-h" data-h="nw"></span><span class="ed-h" data-h="ne"></span><span class="ed-h" data-h="sw"></span><span class="ed-h" data-h="se"></span>';
+      layer.appendChild(el);
+    });
+  }
+  for (const it of ed.items.filter(i => i.page === ed.page)) {
+    const el = document.createElement('div');
+    el.className = `ed-item ed-${it.type}${it.id === ed.sel ? ' sel' : ''}`; el.dataset.id = it.id;
+    Object.assign(el.style, { left: it.x * s + 'px', top: it.y * s + 'px', width: it.w * s + 'px' });
+    if (it.type !== 'text') el.style.height = it.h * s + 'px';
+    if (it.type === 'text') {
+      const tx = document.createElement('div'); tx.className = 'ed-txt'; tx.textContent = it.text; tx.spellcheck = false;
+      Object.assign(tx.style, { fontSize: it.size * s + 'px', color: it.color, lineHeight: 1.3 });
+      tx.addEventListener('input', () => { it.text = tx.innerText.replace(/\n$/, ''); it.h = el.offsetHeight / s; });
+      tx.addEventListener('blur', () => { tx.contentEditable = 'false'; if (!it.text.trim()) { ed.items = ed.items.filter(x => x !== it); drawItems(); } });
+      el.appendChild(tx);
+      requestAnimationFrame(() => { it.h = el.offsetHeight / s; });
+    } else if (it.type === 'image' || it.type === 'sig') {
+      const im = new Image(); im.src = it.src; im.alt = ''; im.draggable = false; el.appendChild(im);
+    } else if (it.type === 'rect') { el.style.background = it.color; el.style.border = it.color.toUpperCase() === '#FFFFFF' ? '1px dashed #bbb' : ''; }
+    else if (it.type === 'hl') el.style.background = it.color === '#FFFFFF' ? 'rgba(255,228,92,.45)' : hexA(it.color, .4);
+    else if (it.type === 'redact') el.style.background = $('#opts')?.color?.value || '#000';
+    else if (it.type === 'draw') el.innerHTML = `<svg viewBox="0 0 ${it.w} ${it.h}" preserveAspectRatio="none" width="100%" height="100%"><polyline points="${it.points.map(p => p.join(',')).join(' ')}" fill="none" stroke="${it.color}" stroke-width="${it.stroke}" stroke-linecap="round" stroke-linejoin="round" vector-effect="non-scaling-stroke" style="stroke-width:${it.stroke * s}px"/></svg>`;
+    if (it.id === ed.sel) el.insertAdjacentHTML('beforeend', `<span class="ed-h" data-h="se"></span><button type="button" class="ed-x" aria-label="刪除">×</button>`);
+    layer.appendChild(el);
+  }
+  edInfo();
+}
+const hexA = (hex, a) => { const n = parseInt(hex.slice(1), 16); return `rgba(${n >> 16},${(n >> 8) & 255},${n & 255},${a})`; };
+function addItem(it) { it.id = 'i' + (++uid); it.page = it.page ?? state.ed.page; state.ed.items.push(it); state.ed.sel = it.id; drawItems(); return it; }
+async function addItemAtCenter(it) {
+  const vp1 = await vpOf(state.ed.page);
+  it.w = it.w || 160; it.h = it.h || 24;
+  it.x = (vp1.width - it.w) / 2; it.y = (vp1.height - it.h) / 2;
+  addItem(it);
+}
+function pickImage(cb) {
+  const inp = document.createElement('input'); inp.type = 'file'; inp.accept = 'image/png,image/jpeg,image/webp,image/gif'; inp.hidden = true;
+  inp.addEventListener('change', async () => {
+    const f = inp.files[0]; inp.remove(); if (!f) return;
+    const src = await normalizeImage(f);
+    const im = new Image(); im.src = src; await im.decode();
+    if (cb) return cb(src, im);
+    const vp1 = await vpOf(state.ed.page);
+    const w = Math.min(vp1.width * .5, im.naturalWidth * .75), h = w * im.naturalHeight / im.naturalWidth;
+    addItem({ type: 'image', src, x: (vp1.width - w) / 2, y: (vp1.height - h) / 2, w, h, ratio: im.naturalHeight / im.naturalWidth });
+    setEdTool('select');
+  });
+  document.body.appendChild(inp); inp.click();
+}
+async function normalizeImage(file, removeWhite) {
+  const bmp = await createImageBitmap(file, { imageOrientation: 'from-image' });
+  const s = Math.min(1, 1600 / Math.max(bmp.width, bmp.height));
+  const c = document.createElement('canvas'); c.width = Math.round(bmp.width * s); c.height = Math.round(bmp.height * s);
+  const ctx = c.getContext('2d'); ctx.drawImage(bmp, 0, 0, c.width, c.height);
+  if (removeWhite) { const d = ctx.getImageData(0, 0, c.width, c.height); for (let i = 0; i < d.data.length; i += 4) { const l = (d.data[i] + d.data[i + 1] + d.data[i + 2]) / 3; if (l > 200) d.data[i + 3] = Math.max(0, 255 - (l - 200) * 4.6); } ctx.putImageData(d, 0, 0); }
+  return c.toDataURL('image/png');
+}
+function bindLayer(layer) {
+  let drag = null;
+  const pt = e => { const r = layer.getBoundingClientRect(); return { x: (e.clientX - r.left) / state.ed.scale, y: (e.clientY - r.top) / state.ed.scale }; };
+  layer.addEventListener('pointerdown', async e => {
+    const ed = state.ed, tool = ed.tool, p = pt(e);
+    const x = e.target.closest('.ed-x');
+    if (x) { e.preventDefault(); deleteSel(); return; }
+    const el = e.target.closest('.ed-item');
+    const handle = e.target.closest('.ed-h');
+    if (el && el.dataset.id === 'crop') {
+      const vp1 = await vpOf(ed.page);
+      drag = { mode: handle ? 'crop-' + handle.dataset.h : 'crop-move', start: p, orig: { ...ed.crop }, vp1 };
+      layer.setPointerCapture(e.pointerId); e.preventDefault(); return;
+    }
+    if (ed.crop && !el) { const vp1 = await vpOf(ed.page); drag = { mode: 'crop-new', start: p, vp1 }; layer.setPointerCapture(e.pointerId); e.preventDefault(); return; }
+    if (el) {
+      const it = ed.items.find(i => i.id === el.dataset.id);
+      const txt = e.target.closest('.ed-txt');
+      if (txt && txt.contentEditable === 'true') return; // editing text: let the caret work
+      if (txt && ed.sel === it.id && !handle) { txt.contentEditable = 'true'; txt.focus(); placeCaretEnd(txt); return; }
+      if (ed.sel !== it.id) { ed.sel = it.id; drawItems(); if (it.color) { const r = $(`input[name="edcolor"][value="${it.color}"]`); if (r) r.checked = true; } }
+      drag = { mode: handle ? 'resize' : 'move', it, start: p, orig: { x: it.x, y: it.y, w: it.w, h: it.h } };
+      layer.setPointerCapture(e.pointerId); e.preventDefault(); return;
+    }
+    if (ed.sel) { ed.sel = null; drawItems(); if (tool === 'select') return; }
+    if (tool === 'text') {
+      const it = addItem({ type: 'text', text: '', x: p.x, y: p.y - state.ed.size * .65, w: 200, h: state.ed.size * 1.3, size: state.ed.size, color: ed.color });
+      requestAnimationFrame(() => { const t = $(`.ed-item[data-id="${it.id}"] .ed-txt`); if (t) { t.contentEditable = 'true'; t.focus(); } });
+      e.preventDefault();
+    } else if (tool === 'sig') {
+      const sg = ed.sigs[ed.sigSel]; if (!sg) { openSigDialog(); return; }
+      const w = 150, h = w * sg.ratio;
+      addItem({ type: 'sig', src: sg.src, ratio: sg.ratio, x: p.x - w / 2, y: p.y - h / 2, w, h });
+    } else if (tool === 'rect' || tool === 'hl' || tool === 'redact') {
+      const it = addItem({ type: tool, x: p.x, y: p.y, w: 1, h: 1, color: tool === 'rect' ? (ed.color === '#2E2640' ? '#FFFFFF' : ed.color) : tool === 'hl' ? (ed.color === '#2E2640' ? '#FFE45C' : ed.color) : '#000' });
+      drag = { mode: 'create', it, start: p }; layer.setPointerCapture(e.pointerId); e.preventDefault();
+    } else if (tool === 'draw') {
+      const it = { type: 'draw', pts: [[p.x, p.y]], color: ed.color, stroke: 2, page: ed.page };
+      drag = { mode: 'draw', it }; layer.setPointerCapture(e.pointerId); e.preventDefault();
+      const svgEl = document.createElementNS('http://www.w3.org/2000/svg', 'svg'); svgEl.setAttribute('class', 'ed-live'); svgEl.innerHTML = `<polyline fill="none" stroke="${ed.color}" stroke-width="${2 * ed.scale}" stroke-linecap="round" stroke-linejoin="round"/>`; layer.appendChild(svgEl); drag.svg = svgEl;
+    }
+  });
+  layer.addEventListener('pointermove', e => {
+    if (!drag) return;
+    const p = pt(e), ed = state.ed, dx = p.x - (drag.start ? drag.start.x : 0), dy = p.y - (drag.start ? drag.start.y : 0);
+    if (drag.mode === 'move') { drag.it.x = drag.orig.x + dx; drag.it.y = drag.orig.y + dy; posEl(drag.it); }
+    else if (drag.mode === 'resize') { const w = Math.max(8, drag.orig.w + dx); drag.it.w = w; if (drag.it.ratio) drag.it.h = w * drag.it.ratio; else if (drag.it.type !== 'text') drag.it.h = Math.max(4, drag.orig.h + dy); posEl(drag.it); }
+    else if (drag.mode === 'create') { const it = drag.it; it.x = Math.min(p.x, drag.start.x); it.y = Math.min(p.y, drag.start.y); it.w = Math.abs(dx); it.h = Math.abs(dy); posEl(it); }
+    else if (drag.mode === 'draw') { drag.it.pts.push([p.x, p.y]); drag.svg.querySelector('polyline').setAttribute('points', drag.it.pts.map(q => `${q[0] * ed.scale},${q[1] * ed.scale}`).join(' ')); }
+    else if (drag.mode.startsWith('crop')) {
+      const W = drag.vp1.width, H = drag.vp1.height, c = drag.orig ? { ...drag.orig } : null;
+      let r;
+      if (drag.mode === 'crop-new') r = { fx: Math.min(p.x, drag.start.x) / W, fy: Math.min(p.y, drag.start.y) / H, fw: Math.abs(dx) / W, fh: Math.abs(dy) / H };
+      else if (drag.mode === 'crop-move') r = { ...c, fx: Math.min(1 - c.fw, Math.max(0, c.fx + dx / W)), fy: Math.min(1 - c.fh, Math.max(0, c.fy + dy / H)) };
+      else {
+        const h = drag.mode.slice(5); r = { ...c };
+        if (h.includes('w')) { r.fx = Math.min(c.fx + c.fw - .02, c.fx + dx / W); r.fw = c.fw + c.fx - r.fx; }
+        if (h.includes('e')) r.fw = Math.max(.02, c.fw + dx / W);
+        if (h.includes('n')) { r.fy = Math.min(c.fy + c.fh - .02, c.fy + dy / H); r.fh = c.fh + c.fy - r.fy; }
+        if (h.includes('s')) r.fh = Math.max(.02, c.fh + dy / H);
+      }
+      r.fx = Math.max(0, r.fx); r.fy = Math.max(0, r.fy); r.fw = Math.min(1 - r.fx, r.fw); r.fh = Math.min(1 - r.fy, r.fh);
+      ed.crop = r;
+      const el = $('.ed-crop'); if (el) Object.assign(el.style, { left: r.fx * W * ed.scale + 'px', top: r.fy * H * ed.scale + 'px', width: r.fw * W * ed.scale + 'px', height: r.fh * H * ed.scale + 'px' });
+    }
+  });
+  const end = () => {
+    if (!drag) return;
+    const d = drag; drag = null;
+    if (d.mode === 'create' && (d.it.w < 3 || d.it.h < 3)) { state.ed.items = state.ed.items.filter(i => i !== d.it); state.ed.sel = null; }
+    if (d.mode === 'draw') {
+      d.svg.remove();
+      if (d.it.pts.length > 1) {
+        const xs = d.it.pts.map(q => q[0]), ys = d.it.pts.map(q => q[1]);
+        const x = Math.min(...xs) - 2, y = Math.min(...ys) - 2, w = Math.max(...xs) - x + 2, h = Math.max(...ys) - y + 2;
+        addItem({ type: 'draw', x, y, w, h, color: d.it.color, stroke: d.it.stroke, points: d.it.pts.map(q => [q[0] - x, q[1] - y]), ow: w, oh: h });
+        state.ed.sel = null;
+      }
+    }
+    drawItems();
+  };
+  layer.addEventListener('pointerup', end); layer.addEventListener('pointercancel', end);
+}
+function posEl(it) {
+  const el = $(`.ed-item[data-id="${it.id}"]`), s = state.ed.scale; if (!el) return;
+  Object.assign(el.style, { left: it.x * s + 'px', top: it.y * s + 'px', width: it.w * s + 'px' });
+  if (it.type !== 'text') el.style.height = it.h * s + 'px';
+}
+function placeCaretEnd(el) { const r = document.createRange(); r.selectNodeContents(el); r.collapse(false); const s = getSelection(); s.removeAllRanges(); s.addRange(r); }
+
+// Burn overlay items (text, images, signatures, shapes, drawings) into the PDF.
+async function itemImage(it) {
+  if (it.type === 'text') return textBoxImage(it.text, { size: it.size, color: it.color, width: null, lineHeight: 1.3 });
+  const k = 4, W = Math.max(1, Math.round(it.w * k)), H = Math.max(1, Math.round(it.h * k));
+  const c = document.createElement('canvas'); c.width = W; c.height = H; const ctx = c.getContext('2d');
+  if (it.type === 'rect') { ctx.fillStyle = it.color; ctx.fillRect(0, 0, W, H); }
+  else if (it.type === 'hl') { ctx.fillStyle = hexA(it.color === '#FFFFFF' ? '#FFE45C' : it.color, .4); ctx.fillRect(0, 0, W, H); }
+  else if (it.type === 'draw') { ctx.strokeStyle = it.color; ctx.lineWidth = it.stroke * k; ctx.lineCap = ctx.lineJoin = 'round'; ctx.beginPath(); const sx = it.w / it.ow, sy = it.h / it.oh; it.points.forEach(([x, y], i) => i ? ctx.lineTo(x * sx * k, y * sy * k) : ctx.moveTo(x * sx * k, y * sy * k)); ctx.stroke(); }
+  else { const im = new Image(); im.src = it.src; await im.decode(); ctx.drawImage(im, 0, 0, W, H); }
+  return { bytes: await canvasBytes(c), w: it.w, h: it.h };
+}
+async function applyOverlayItems(suffix, title) {
+  const doc = await loadPdf(state.bytes);
+  const pages = doc.getPages();
+  const items = state.ed.items.filter(i => i.type !== 'text' || i.text.trim());
+  if (!items.length) throw new Error('還沒有加入任何內容。');
+  const cache = {};
+  for (let k = 0; k < items.length; k++) {
+    const it = items[k];
+    overlay.set(k / items.length, `套用第 ${k + 1} / ${items.length} 個物件`);
+    const vp1 = await vpOf(it.page);
+    const key = (it.type === 'sig' || it.type === 'image') ? it.src : null;
+    let img;
+    if (key && cache[key]) img = cache[key];
+    else { const im = await itemImage(it); img = await doc.embedPng(im.bytes); if (key) cache[key] = img; if (it.type === 'text') { it._w = im.w; it._h = im.h; } }
+    const rect = it.type === 'text' ? { x: it.x, y: it.y, w: it._w, h: it._h } : { x: it.x, y: it.y, w: it.w, h: it.h };
+    placeOnPage(pages[it.page], img, rect, vp1);
+  }
+  const pagesTouched = new Set(items.map(i => i.page)).size;
+  return { kind: 'file', name: baseName(state.file.name) + suffix, blob: pdfBlob(await doc.save()), title, detail: `${items.length} 個物件，分布在 ${pagesTouched} 頁` };
+}
+
+async function autoCrop() {
+  const { canvas, vp1 } = await renderPageCanvas(state.js, state.ed.page + 1, 50);
+  const ctx = canvas.getContext('2d'), d = ctx.getImageData(0, 0, canvas.width, canvas.height).data;
+  let x0 = canvas.width, y0 = canvas.height, x1 = 0, y1 = 0;
+  for (let y = 0; y < canvas.height; y++) for (let x = 0; x < canvas.width; x++) { const i = (y * canvas.width + x) * 4; if (d[i] < 235 || d[i + 1] < 235 || d[i + 2] < 235) { if (x < x0) x0 = x; if (x > x1) x1 = x; if (y < y0) y0 = y; if (y > y1) y1 = y; } }
+  if (x1 <= x0 || y1 <= y0) { toast('這一頁是空白的，找不到內容範圍'); return; }
+  const m = 6 * canvas.width / vp1.width;
+  state.ed.crop = { fx: Math.max(0, (x0 - m) / canvas.width), fy: Math.max(0, (y0 - m) / canvas.height), fw: Math.min(1, (x1 - x0 + 2 * m) / canvas.width), fh: Math.min(1, (y1 - y0 + 2 * m) / canvas.height) };
+  drawItems(); toast('已框出內容範圍，可以再微調');
+}
+
+// ---------- redaction search ----------
+const RD_PATTERNS = { id: /[A-Z][12489]\d{8}/g, phone: /(?:\+?886[-\s]?|0)9\d{2}[-\s]?\d{3}[-\s]?\d{3}|\(?0\d{1,2}\)?[-\s]?\d{3,4}[-\s]?\d{4}/g, email: /[\w.+-]+@[\w-]+(\.[\w-]+)+/g };
+function bindRedactOpts() {
+  const run = async re => {
+    overlay.show('搜尋中');
+    let hits = 0;
+    try {
+      for (let i = 0; i < state.js.numPages; i++) {
+        overlay.set(i / state.js.numPages, `搜尋第 ${i + 1} 頁`);
+        const { lines } = await pageLines(state.js, i + 1);
+        for (const l of lines) {
+          let str = '', map = [];
+          l.items.forEach(it => { for (let c = 0; c < it.str.length; c++) { map.push({ it, c }); } str += it.str; });
+          re.lastIndex = 0; let m;
+          while ((m = re.exec(str))) {
+            if (!m[0].length) { re.lastIndex++; continue; }
+            const segs = new Map();
+            for (let c = m.index; c < m.index + m[0].length; c++) { const { it, c: ci } = map[c]; const s = segs.get(it) || { a: ci, b: ci }; s.b = ci; segs.set(it, s); }
+            for (const [it, s] of segs) {
+              const cw = it.w / Math.max(1, it.str.length);
+              state.ed.items.push({ id: 'i' + (++uid), page: i, type: 'redact', x: it.x + cw * s.a - 1, y: it.y - it.size * .1, w: cw * (s.b - s.a + 1) + 2, h: it.size * 1.25 });
+              hits++;
+            }
+            if (!re.global) break;
+          }
+        }
+      }
+    } finally { overlay.hide(); }
+    drawItems();
+    toast(hits ? `找到並標記了 ${hits} 處，請逐頁確認` : '沒有找到符合的文字');
+  };
+  $('#rdFind').addEventListener('click', () => { const q = $('#rd-q').value.trim(); if (!q) { toast('請輸入要搜尋的文字'); return; } run(new RegExp(q.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'gi')); });
+  $('#rd-q').addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); $('#rdFind').click(); } });
+  $$('[data-rdp]').forEach(b => b.addEventListener('click', () => run(new RegExp(RD_PATTERNS[b.dataset.rdp].source, 'g'))));
+  $$('input[name="color"]').forEach(r => r.addEventListener('change', drawItems));
+}
+
+// ---------- signatures ----------
+function renderSigList() {
+  const box = $('#sigList'); if (!box) return;
+  const ed = state.ed;
+  box.innerHTML = ed.sigs.map((s, i) => `<label class="choice sig-choice"><input type="radio" name="sigpick" value="${i}" ${i === ed.sigSel ? 'checked' : ''}><img src="${s.src}" alt="簽名 ${i + 1}"><button type="button" class="icon-btn" data-sigdel="${i}" aria-label="刪除簽名">${ICONS.x}</button></label>`).join('');
+  $$('input[name="sigpick"]', box).forEach(r => r.addEventListener('change', () => { ed.sigSel = +r.value; setEdTool('sig'); }));
+  $$('[data-sigdel]', box).forEach(b => b.addEventListener('click', e => { e.preventDefault(); ed.sigs.splice(+b.dataset.sigdel, 1); ed.sigSel = 0; renderSigList(); }));
+  const nb = $('#newSig'); if (nb && !nb.dataset.bound) { nb.dataset.bound = 1; nb.addEventListener('click', openSigDialog); }
+}
+function openSigDialog() {
+  const wrap = document.createElement('div');
+  wrap.className = 'overlay'; wrap.setAttribute('role', 'dialog'); wrap.setAttribute('aria-label', '建立簽名');
+  wrap.innerHTML = `<div class="sig-card">
+    <h2>建立簽名</h2>
+    <div class="seg" role="tablist"><label><input type="radio" name="sigmode" value="draw" checked>手寫</label><label><input type="radio" name="sigmode" value="type">打字</label><label><input type="radio" name="sigmode" value="upload">上傳圖片</label></div>
+    <div data-pane="draw"><canvas class="sig-pad" width="1040" height="360"></canvas><div class="sig-row"><span class="help">用滑鼠或手指在框內簽名</span><button type="button" class="btn btn-ghost btn-sm" id="sigClear">清除重簽</button></div></div>
+    <div data-pane="type" hidden><input type="text" id="sigName" placeholder="輸入你的名字" maxlength="30" autocomplete="name"><div class="sig-fonts" role="radiogroup" aria-label="字體"></div></div>
+    <div data-pane="upload" hidden><button type="button" class="btn btn-secondary" id="sigUp">選擇簽名圖片</button><label class="check" style="margin-top:10px"><input type="checkbox" id="sigBg" checked>自動去除白色背景</label><div id="sigUpPrev" class="sig-prev"></div></div>
+    <div class="sig-row"><div class="swatches">${['#1A1A1A', '#1D3FA6', '#603E8D'].map((c, i) => `<label style="background:${c}"><input type="radio" name="sigcolor" value="${c}" ${i ? '' : 'checked'}><span class="sr">${c}</span></label>`).join('')}</div>
+      <span style="flex:1"></span><button type="button" class="btn btn-ghost" id="sigCancel">取消</button><button type="button" class="btn btn-primary" id="sigOk">使用這個簽名</button></div>
+  </div>`;
+  document.body.appendChild(wrap);
+  const pad = $('.sig-pad', wrap), pctx = pad.getContext('2d');
+  const color = () => $('input[name="sigcolor"]:checked', wrap).value;
+  let drawing = false, dirty = false, last = null, upSrc = null;
+  pad.addEventListener('pointerdown', e => { drawing = true; dirty = true; pad.setPointerCapture(e.pointerId); last = pos(e); });
+  pad.addEventListener('pointermove', e => { if (!drawing) return; const p = pos(e); pctx.strokeStyle = color(); pctx.lineWidth = 5 + Math.min(4, (e.pressure || .5) * 4); pctx.lineCap = pctx.lineJoin = 'round'; pctx.beginPath(); pctx.moveTo(last.x, last.y); pctx.lineTo(p.x, p.y); pctx.stroke(); last = p; });
+  pad.addEventListener('pointerup', () => { drawing = false; });
+  const pos = e => { const r = pad.getBoundingClientRect(); return { x: (e.clientX - r.left) * pad.width / r.width, y: (e.clientY - r.top) * pad.height / r.height }; };
+  $('#sigClear', wrap).addEventListener('click', () => { pctx.clearRect(0, 0, pad.width, pad.height); dirty = false; });
+  const fonts = [['Dancing Script', 'Dancing Script'], ['Great Vibes', 'Great Vibes'], ['LXGW WenKai TC', '霞鶩文楷'], ['Noto Sans TC', '黑體']];
+  if (!document.getElementById('sigFontsCss')) { const l = document.createElement('link'); l.id = 'sigFontsCss'; l.rel = 'stylesheet'; l.href = 'https://fonts.googleapis.com/css2?family=Dancing+Script:wght@600&family=Great+Vibes&family=LXGW+WenKai+TC&display=swap'; document.head.appendChild(l); }
+  const renderFonts = () => { const name = $('#sigName', wrap).value || '你的名字'; $('.sig-fonts', wrap).innerHTML = fonts.map(([f, label], i) => `<label class="choice"><input type="radio" name="sigfont" value="${f}" ${i === (wrap.dataset.font || 0) * 1 ? 'checked' : ''}><span style="font-family:'${f}';font-size:30px;color:${color()};line-height:1.2">${esc(name)}</span><small style="margin-left:auto;color:var(--muted)">${label}</small></label>`).join(''); $$('input[name="sigfont"]', wrap).forEach((r, i) => r.addEventListener('change', () => { wrap.dataset.font = i; })); };
+  $('#sigName', wrap).addEventListener('input', renderFonts); renderFonts();
+  $$('input[name="sigcolor"]', wrap).forEach(r => r.addEventListener('change', renderFonts));
+  $$('input[name="sigmode"]', wrap).forEach(r => r.addEventListener('change', () => $$('[data-pane]', wrap).forEach(p => { p.hidden = p.dataset.pane !== r.value; })));
+  $('#sigUp', wrap).addEventListener('click', () => {
+    const inp = document.createElement('input'); inp.type = 'file'; inp.accept = 'image/*';
+    inp.onchange = async () => { const f = inp.files[0]; if (!f) return; upSrc = await normalizeImage(f, $('#sigBg', wrap).checked); $('#sigUpPrev', wrap).innerHTML = `<img src="${upSrc}" alt="">`; };
+    inp.click();
+  });
+  const close = () => wrap.remove();
+  $('#sigCancel', wrap).addEventListener('click', close);
+  wrap.addEventListener('keydown', e => { if (e.key === 'Escape') close(); });
+  $('#sigOk', wrap).addEventListener('click', async () => {
+    const mode = $('input[name="sigmode"]:checked', wrap).value;
+    let c;
+    if (mode === 'draw') { if (!dirty) { toast('請先在框內簽名'); return; } c = trimCanvas(pad); }
+    else if (mode === 'type') {
+      const name = $('#sigName', wrap).value.trim(); if (!name) { toast('請輸入名字'); return; }
+      const f = $('input[name="sigfont"]:checked', wrap).value;
+      try { await document.fonts.load(`120px "${f}"`, name); } catch (_) {}
+      const m = document.createElement('canvas').getContext('2d'); m.font = `120px "${f}"`;
+      c = document.createElement('canvas'); c.width = Math.ceil(m.measureText(name).width) + 60; c.height = 200;
+      const x = c.getContext('2d'); x.font = `120px "${f}"`; x.fillStyle = color(); x.textBaseline = 'middle'; x.fillText(name, 30, 100); c = trimCanvas(c);
+    } else { if (!upSrc) { toast('請先選擇圖片'); return; } const im = new Image(); im.src = upSrc; await im.decode(); c = document.createElement('canvas'); c.width = im.naturalWidth; c.height = im.naturalHeight; c.getContext('2d').drawImage(im, 0, 0); c = trimCanvas(c); }
+    if (!c) { toast('簽名是空白的'); return; }
+    state.ed.sigs.push({ src: c.toDataURL('image/png'), ratio: c.height / c.width });
+    state.ed.sigSel = state.ed.sigs.length - 1;
+    close(); renderSigList(); setEdTool('sig'); toast('點一下頁面放上簽名');
+  });
+}
+function trimCanvas(c) {
+  const ctx = c.getContext('2d'), d = ctx.getImageData(0, 0, c.width, c.height).data;
+  let x0 = c.width, y0 = c.height, x1 = -1, y1 = -1;
+  for (let y = 0; y < c.height; y++) for (let x = 0; x < c.width; x++) if (d[(y * c.width + x) * 4 + 3] > 10) { if (x < x0) x0 = x; if (x > x1) x1 = x; if (y < y0) y0 = y; if (y > y1) y1 = y; }
+  if (x1 < 0) return null;
+  const p = 8, o = document.createElement('canvas'); o.width = x1 - x0 + p * 2; o.height = y1 - y0 + p * 2;
+  o.getContext('2d').drawImage(c, x0 - p, y0 - p, o.width, o.height, 0, 0, o.width, o.height);
+  return o;
+}
+
+/* ================= forms ================= */
+async function renderForms(c) {
+  c.innerHTML = `<div class="canvas-bar"><span class="info" id="info"></span></div><div id="formbox"></div>`;
+  const box = $('#formbox');
+  const doc = await loadPdf(state.bytes);
+  state.formDoc = doc;
+  let fields = [];
+  try { fields = doc.getForm().getFields(); } catch (_) {}
+  const L = window.PDFLib;
+  const pageRefs = doc.getPages().map(p => p.ref);
+  const list = [];
+  for (const f of fields) {
+    let type = f instanceof L.PDFTextField ? 'text' : f instanceof L.PDFCheckBox ? 'check' : f instanceof L.PDFDropdown ? 'select' : f instanceof L.PDFOptionList ? 'list' : f instanceof L.PDFRadioGroup ? 'radio' : null;
+    if (!type) continue;
+    let page = 0, y = 0;
+    try { const w = f.acroField.getWidgets()[0]; const pr = w.P(); const idx = pr ? pageRefs.findIndex(r => String(r) === String(pr)) : -1; page = Math.max(0, idx); y = -w.getRectangle().y; } catch (_) {}
+    const raw = f.getName(); const label = raw.split('.').pop().replace(/\[\d+\]$/g, '').replace(/[_]+/g, ' ').trim() || raw;
+    list.push({ f, type, page, y, label, raw, readOnly: f.isReadOnly && f.isReadOnly() });
+  }
+  list.sort((a, b) => a.page - b.page || a.y - b.y);
+  state.formList = list;
+  $('#info').textContent = list.length ? `找到 ${list.length} 個欄位` : '';
+  if (!list.length) {
+    box.innerHTML = `<p class="notice">這份 PDF 沒有可以填寫的表單欄位。如果只是要在空白處寫字，請改用 <a href="#editpdf">編輯 PDF</a> 加入文字。</p>`;
+    $('#go').disabled = true; return;
+  }
+  let html = '', lastPage = -1;
+  list.forEach((x, k) => {
+    if (x.page !== lastPage) { html += `<h3 class="form-page">第 ${x.page + 1} 頁</h3>`; lastPage = x.page; }
+    const id = 'ff' + k, dis = x.readOnly ? 'disabled' : '';
+    let input = '';
+    if (x.type === 'text') { const v = x.f.getText() || ''; input = x.f.isMultiline() ? `<textarea id="${id}" rows="3" ${dis}>${esc(v)}</textarea>` : `<input id="${id}" type="text" value="${esc(v)}" ${x.f.getMaxLength() ? `maxlength="${x.f.getMaxLength()}"` : ''} ${dis}>`; }
+    else if (x.type === 'check') input = `<label class="check"><input id="${id}" type="checkbox" ${x.f.isChecked() ? 'checked' : ''} ${dis}>勾選</label>`;
+    else if (x.type === 'select' || x.type === 'list') { const sel = x.f.getSelected(); input = `<select id="${id}" ${dis}><option value=""></option>${x.f.getOptions().map(o => `<option ${sel.includes(o) ? 'selected' : ''}>${esc(o)}</option>`).join('')}</select>`; }
+    else if (x.type === 'radio') { const sel = x.f.getSelected(); input = `<div class="seg" style="grid-auto-flow:row;grid-auto-columns:auto">${x.f.getOptions().map(o => `<label><input type="radio" name="${id}" value="${esc(o)}" ${sel === o ? 'checked' : ''} ${dis}>${esc(o)}</label>`).join('')}</div>`; }
+    html += `<div class="field form-field"><label for="${id}" title="${esc(x.raw)}">${esc(x.label)}${x.readOnly ? '（唯讀）' : ''}</label>${input}</div>`;
+  });
+  box.innerHTML = `<div class="form-list">${html}</div>`;
+}
+OPTS_CHANGE.forms = () => {};
+async function saveForms(o) {
+  const doc = state.formDoc, form = doc.getForm(), L = window.PDFLib;
+  const wide = s => /[^\x00-\xFF]/.test(s);
+  const cjkFields = [];
+  state.formList.forEach((x, k) => {
+    if (x.readOnly) return;
+    const id = 'ff' + k;
+    try {
+      if (x.type === 'text') { const v = $('#' + id).value; x.f.setText(v || undefined); if (v && wide(v)) cjkFields.push({ x, v }); }
+      else if (x.type === 'check') $('#' + id).checked ? x.f.check() : x.f.uncheck();
+      else if (x.type === 'select' || x.type === 'list') { const v = $('#' + id).value; if (v) x.f.select(v); else x.f.clear(); }
+      else if (x.type === 'radio') { const r = $(`input[name="${id}"]:checked`); if (r) x.f.select(r.value); }
+    } catch (e) { console.warn('field', x.raw, e); }
+  });
+  // Helvetica can't draw CJK: for those fields either draw the text as an image (flatten) or let the viewer regenerate it.
+  const strip = [];
+  for (const { x, v } of cjkFields) {
+    form.markFieldAsClean(x.f.ref);
+    for (const w of x.f.acroField.getWidgets()) {
+      if (o.flatten) {
+        const r = w.getRectangle(); const pr = w.P(); const page = doc.getPages().find(p => String(p.ref) === String(pr)) || doc.getPages()[x.page];
+        const size = Math.min(12, r.height * .65);
+        const im = await textBoxImage(v, { size, width: x.f.isMultiline() ? r.width - 4 : null, color: '#111' });
+        const img = await doc.embedPng(im.bytes);
+        const sc = Math.min(1, (r.width - 4) / im.w, (r.height - 2) / im.h);
+        page.drawImage(img, { x: r.x + 2, y: r.y + (x.f.isMultiline() ? r.height - im.h * sc - 1 : (r.height - im.h * sc) / 2), width: im.w * sc, height: im.h * sc });
+      } else strip.push(w);
+    }
+    if (o.flatten) form.removeField(x.f);
+  }
+  if (cjkFields.length && !o.flatten) {
+    form.acroForm.dict.set(PDFName.of('NeedAppearances'), L.PDFBool.True);
+    form.updateFieldAppearances(); // Latin fields only; CJK ones were marked clean above
+    strip.forEach(w => w.dict.delete(PDFName.of('AP'))); // stale appearance would show the old value
+  }
+  if (o.flatten) form.flatten();
+  const bytes = await doc.save({ updateFieldAppearances: !(cjkFields.length && !o.flatten) });
+  state.formDoc = await PDFDocument.load(bytes); // keep editable copy fresh if user goes back
+  return { kind: 'file', name: baseName(state.file.name) + '_filled.pdf', blob: pdfBlob(bytes), title: '表單已儲存', detail: o.flatten ? '欄位已鎖定成文件內容' : '欄位仍可在其他 PDF 閱讀器中修改' };
+}
+
+/* ================= compare result ================= */
+function compareHtml(r) {
+  const rows = r.rows;
+  const changed = rows.some(x => x.t !== '=');
+  let txt = '';
+  if (changed) {
+    // show changes with up to 2 lines of context
+    const keep = new Set();
+    rows.forEach((x, i) => { if (x.t !== '=') for (let k = i - 2; k <= i + 2; k++) keep.add(k); });
+    let gap = false;
+    rows.forEach((x, i) => {
+      if (!keep.has(i)) { if (!gap) txt += `<div class="df-gap">⋯</div>`; gap = true; return; }
+      gap = false;
+      if (x.t === '=') txt += `<div class="df-row"><div>${esc(x.a.t)}</div><div>${esc(x.b.t)}</div></div>`;
+      else if (x.t === '-') txt += `<div class="df-row df-del"><div><span class="pg">p${x.a.p}</span>${esc(x.a.t)}</div><div></div></div>`;
+      else if (x.t === '+') txt += `<div class="df-row df-add"><div></div><div><span class="pg">p${x.b.p}</span>${esc(x.b.t)}</div></div>`;
+      else { const d = inlineDiff(x.a.t, x.b.t) || { a: `<del>${esc(x.a.t)}</del>`, b: `<ins>${esc(x.b.t)}</ins>` }; txt += `<div class="df-row df-mod"><div><span class="pg">p${x.a.p}</span>${d.a}</div><div><span class="pg">p${x.b.p}</span>${d.b}</div></div>`; }
+    });
+  }
+  return `
+    <div class="cmp">
+      <div class="cmp-stats"><span class="saving" style="background:#E9F8F6">新增 ${r.adds} 行</span><span class="saving" style="background:var(--danger-bg);color:var(--danger)">刪除 ${r.dels} 行</span><span class="saving" style="background:#FFF6DC;color:#7A5A00">修改 ${r.mods} 行</span>${r.mode === 'both' ? `<span class="saving" style="background:var(--mist);color:var(--purple)">畫面不同 ${r.visual.length} 頁</span>` : ''}</div>
+      <h3>文字差異</h3>
+      ${changed ? `<div class="df"><div class="df-row df-head"><div>舊版：${esc(r.names[0])}（${r.pages[0]} 頁）</div><div>新版：${esc(r.names[1])}（${r.pages[1]} 頁）</div></div>${txt}</div>` : '<p class="notice">文字內容完全相同。</p>'}
+      ${r.mode === 'both' ? `<h3>畫面差異</h3>${r.visual.length ? `<p class="help" style="color:var(--muted);font-size:14px">紅色是兩個版本畫面不同的地方（以新版為底）。</p><div class="cmp-vis">${r.visual.map((v, i) => `<figure>${v.missing ? `<div class="notice">${v.missing === 'a' ? '舊版沒有這一頁（新增頁）' : '新版沒有這一頁（刪除頁）'}</div>` : `<div data-vis="${i}"></div>`}<figcaption>第 ${v.page} 頁${v.ratio ? `・差異 ${(v.ratio * 100).toFixed(2)}%` : ''}</figcaption></figure>`).join('')}</div>` : '<p class="notice">每一頁的畫面都相同。</p>'}` : ''}
+    </div>`;
+}
+async function compareReport(r) {
+  const out = await PDFDocument.create();
+  const head = await textBoxImage(`PDF 比較報告\n舊版：${r.names[0]}\n新版：${r.names[1]}\n新增 ${r.adds} 行、刪除 ${r.dels} 行、修改 ${r.mods} 行${r.mode === 'both' ? `、畫面不同 ${r.visual.length} 頁` : ''}`, { size: 13, width: 500, color: '#2E2640' });
+  let pg = out.addPage(PAGE_SIZES.a4), y = 800;
+  pg.drawImage(await out.embedPng(head.bytes), { x: 48, y: y - head.h, width: head.w, height: head.h }); y -= head.h + 16;
+  const lines = r.rows.filter(x => x.t !== '=').map(x => x.t === '-' ? ['− ', x.a.t, '#B3364A', x.a.p] : x.t === '+' ? ['+ ', x.b.t, '#1D6E66', x.b.p] : ['~ ', `${x.a.t}  →  ${x.b.t}`, '#7A5A00', x.b.p]);
+  for (const [sign, t, col, p] of lines.slice(0, 600)) {
+    const im = await textBoxImage(`${sign}p${p}  ${t}`, { size: 9.5, width: 500, color: col });
+    if (y - im.h < 48) { pg = out.addPage(PAGE_SIZES.a4); y = 800; }
+    pg.drawImage(await out.embedPng(im.bytes), { x: 48, y: y - im.h, width: im.w, height: im.h }); y -= im.h + 3;
+  }
+  for (const v of r.visual.filter(v => v.canvas)) {
+    const img = await out.embedJpg(await canvasBytes(v.canvas, 'image/jpeg', .85));
+    const p2 = out.addPage([v.canvas.width, v.canvas.height + 24]);
+    p2.drawImage(img, { x: 0, y: 0, width: v.canvas.width, height: v.canvas.height });
+    const cap = await textBoxImage(`第 ${v.page} 頁・紅色為差異`, { size: 10, color: '#2E2640' });
+    p2.drawImage(await out.embedPng(cap.bytes), { x: 6, y: v.canvas.height + 4, width: cap.w, height: cap.h });
+  }
+  return pdfBlob(await out.save());
+}
+
+// minimal Markdown → HTML for previews (headings, lists, bold, tables, paragraphs)
+function mdToHtml(md) {
+  const inline = s => esc(s).replace(/\*\*(.+?)\*\*/g, '<b>$1</b>').replace(/`([^`]+)`/g, '<code>$1</code>');
+  const lines = md.split('\n'); let html = '', list = null, k = 0;
+  const closeList = () => { if (list) { html += `</${list}>`; list = null; } };
+  while (k < lines.length) {
+    const l = lines[k];
+    if (/^\s*\|.*\|\s*$/.test(l) && /^\s*\|[\s:|-]+\|\s*$/.test(lines[k + 1] || '')) {
+      closeList(); const cells = r => r.trim().replace(/^\||\|$/g, '').split('|').map(c => c.trim());
+      html += `<table><thead><tr>${cells(l).map(c => `<th>${inline(c)}</th>`).join('')}</tr></thead><tbody>`; k += 2;
+      while (k < lines.length && /^\s*\|.*\|\s*$/.test(lines[k])) { html += `<tr>${cells(lines[k]).map(c => `<td>${inline(c)}</td>`).join('')}</tr>`; k++; }
+      html += '</tbody></table>'; continue;
+    }
+    let m;
+    if ((m = l.match(/^(#{1,6})\s+(.*)/))) { closeList(); html += `<h${Math.min(4, m[1].length + 1)}>${inline(m[2])}</h${Math.min(4, m[1].length + 1)}>`; }
+    else if ((m = l.match(/^\s*[-*•]\s+(.*)/))) { if (list !== 'ul') { closeList(); html += '<ul>'; list = 'ul'; } html += `<li>${inline(m[1])}</li>`; }
+    else if ((m = l.match(/^\s*\d+[.)]\s+(.*)/))) { if (list !== 'ol') { closeList(); html += '<ol>'; list = 'ol'; } html += `<li>${inline(m[1])}</li>`; }
+    else if (/^---+$/.test(l.trim())) { closeList(); html += '<hr>'; }
+    else if (l.trim()) { closeList(); html += `<p>${inline(l)}</p>`; }
+    else closeList();
+    k++;
+  }
+  closeList();
+  return html;
+}
+
 /* ================= result ================= */
 function renderResult(r) {
   const t = state.tool;
   const stats = r.before ? `<div class="stats num"><span>原始 <b>${fmtSize(r.before)}</b></span><span>→</span><span>壓縮後 <b>${fmtSize(r.after)}</b></span>${r.after < r.before ? `<span class="saving">省下 ${Math.round((1 - r.after / r.before) * 100)}%</span>` : ''}</div>` : '';
   const next = (NEXT[t.id] || []).map(id => byId[id]).filter(Boolean);
+  const textBlock = r.kind === 'text' ? (r.md
+    ? `<div class="seg" style="width:min(280px,100%)"><label><input type="radio" name="tview" value="preview" checked>預覽</label><label><input type="radio" name="tview" value="raw">原始文字</label></div>
+       <div class="mdprev" id="mdprev">${mdToHtml(r.text)}</div><textarea class="textprev" id="txt" readonly aria-label="結果文字" hidden>${esc(r.text)}</textarea>`
+    : `<textarea class="textprev" id="txt" readonly aria-label="擷取的文字">${esc(r.text)}</textarea>`) : '';
+  let primary;
+  if (r.kind === 'print') primary = `<button class="btn btn-primary" id="reprint" type="button">再開一次列印視窗</button>`;
+  else if (r.kind === 'compare') primary = `<button class="btn btn-primary" id="save" type="button">下載比較報告（PDF）</button>`;
+  else primary = `<button class="btn btn-primary" id="save" type="button">下載 ${esc(r.name)}</button>`;
   $('#stage').innerHTML = `
-    <div class="result">
+    <div class="result${r.kind === 'compare' ? ' wide' : ''}">
       <svg class="ok" viewBox="0 0 120 120" aria-hidden="true">
         <path d="M73.6 17.7 A44 44 0 1 0 102 46" fill="none" stroke="#603E8D" stroke-width="6" stroke-linecap="round"/>
         <path d="M38 62 C37 72 44 77 52 76.5 C64 75.5 74 65 83 51 C72 61 60 68.5 50 69 C44 69.3 40 66.5 38 62 Z" fill="#36C2B4"/>
@@ -1360,9 +3512,10 @@ function renderResult(r) {
       <h2>${esc(r.title)}</h2>
       ${r.detail ? `<p style="color:var(--muted)">${esc(r.detail)}</p>` : ''}
       ${stats}
-      ${r.kind === 'text' ? `<textarea class="textprev" id="txt" readonly aria-label="擷取的文字">${esc(r.text)}</textarea>` : ''}
+      ${textBlock}
+      ${r.kind === 'compare' ? compareHtml(r) : ''}
       <div class="row">
-        <button class="btn btn-primary" id="save" type="button">下載 ${esc(r.name)}</button>
+        ${primary}
         ${r.kind === 'text' ? `<button class="btn btn-secondary" id="copy" type="button">複製文字</button>` : ''}
       </div>
       <div class="row">
@@ -1370,12 +3523,24 @@ function renderResult(r) {
       </div>
       ${next.length ? `<div class="next"><h3>下一步可以</h3><div class="grid">${next.map(n => `<a class="tool-card" href="#${n.id}"><div class="ico">${ICONS[n.id]}</div><h3>${n.name}</h3></a>`).join('')}</div></div>` : ''}
     </div>`;
-  $('#save').addEventListener('click', () => saveFile(r.name, r.blob));
+  if (r.kind === 'compare') {
+    $$('[data-vis]').forEach(el => { const c = r.visual[+el.dataset.vis].canvas; c.style.maxWidth = '100%'; c.style.height = 'auto'; el.appendChild(c); });
+    $('#save').addEventListener('click', async () => {
+      overlay.show('產生報告');
+      try { const blob = await compareReport(r); overlay.hide(); saveFile('compare_report.pdf', blob); }
+      catch (e) { overlay.hide(); toast('報告產生失敗'); console.error(e); }
+    });
+  } else if (r.kind === 'print') {
+    $('#reprint').addEventListener('click', () => run());
+  } else $('#save').addEventListener('click', () => saveFile(r.name, r.blob));
   $('#again').addEventListener('click', () => { resetState(t); renderDrop(); window.scrollTo(0, 0); });
-  if (r.kind === 'text') $('#copy').addEventListener('click', () => {
-    const ta = $('#txt');
-    navigator.clipboard.writeText(r.text).then(() => toast('已複製'), () => { ta.focus(); ta.select(); toast('請按 Ctrl+C（或 ⌘C）複製選取的文字'); });
-  });
+  if (r.kind === 'text') {
+    $('#copy').addEventListener('click', () => {
+      const ta = $('#txt');
+      navigator.clipboard.writeText(r.text).then(() => toast('已複製'), () => { ta.hidden = false; ta.focus(); ta.select(); toast('請按 Ctrl+C（或 ⌘C）複製選取的文字'); });
+    });
+    $$('input[name="tview"]').forEach(x => x.addEventListener('change', () => { const raw = x.value === 'raw' && x.checked; $('#txt').hidden = !raw; $('#mdprev').hidden = raw; }));
+  }
 }
 
 /* ================= mobile menu ================= */
