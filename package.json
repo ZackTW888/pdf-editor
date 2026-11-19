@@ -1,9 +1,0 @@
-{
-  "name": "pdf-editor",
-  "private": true,
-  "type": "module",
-  "description": "秉軒老師的 PDF 工具箱：靜態頁面＋一支 AI 用的 Vercel 函式",
-  "dependencies": {
-    "@anthropic-ai/sdk": "^1.10.0"
-  }
-}
